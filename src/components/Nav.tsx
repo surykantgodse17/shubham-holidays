@@ -28,13 +28,14 @@ export function Nav() {
       <div className="nav-inner">
         <Link to="/" className="brand" onClick={() => setOpen(false)} aria-label="Shubham Holidays">
           <img
-            src="/logo-full.png"
+            src="/app-icon.png"
             alt="Shubham Holidays"
             className="nav-logo"
-            width={220}
+            width={48}
             height={48}
             decoding="async"
           />
+          <span className="nav-brand-text">Shubham Holidays</span>
         </Link>
 
         <button
