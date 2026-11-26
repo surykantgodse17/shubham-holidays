@@ -21,7 +21,7 @@ export function Flights() {
       <div className="shell page-hero">
         <span className="eyebrow">Flights</span>
         <h1>Find your flight</h1>
-        <p>Search sample routes across India and key international hubs, then select and book.</p>
+        <p>Search the available IndiGo Delhi → Goa flight, then select and book.</p>
         <Steps
           items={[
             { label: "Search", state: "active" },
@@ -75,7 +75,7 @@ export function Flights() {
           </div>
           <p className="sample-banner">
             <span className="badge badge-sample">Sample data</span>
-            Try Delhi → Goa or Mumbai → Bengaluru for the richest results.
+            One real IndiGo flight: Delhi (DEL) → Goa (GOI).
           </p>
         </form>
       </div>

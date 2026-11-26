@@ -1,7 +1,9 @@
-/** Canonical demo rate: 1 π = exactly 314159 USD */
+/** Canonical demo rate: 1 Pi = exactly 314159 USD */
 export const PI_USD_VALUE = 314159;
 /** Display string for the rate — always `$314159`, never locale-comma formatted */
 export const PI_USD_RATE_LABEL = `$${PI_USD_VALUE}`;
+/** Exact UI copy requested for checkout / rate display */
+export const PI_USD_RATE_COPY = `1 Pi = ${PI_USD_RATE_LABEL}`;
 /** Demo INR→USD conversion for displaying Pi amounts from INR catalog prices */
 export const DEMO_INR_PER_USD = 83;
 
@@ -81,9 +83,9 @@ export function formatPi(amount: number): string {
   return `${amount.toFixed(7)} π`;
 }
 
-/** UI copy: `1 π = $314159` */
+/** UI copy: exactly `1 Pi = $314159` */
 export function formatPiUsdRate(): string {
-  return `1 π = ${PI_USD_RATE_LABEL}`;
+  return PI_USD_RATE_COPY;
 }
 
 /**

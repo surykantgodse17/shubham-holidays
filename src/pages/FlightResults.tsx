@@ -15,9 +15,6 @@ export function FlightResults() {
 
   const results = useMemo(() => {
     let list = flights.filter((f) => f.from === from && f.to === to);
-    if (list.length === 0) {
-      list = flights.filter((f) => f.from === from || f.to === to).slice(0, 4);
-    }
     if (nonstop) list = list.filter((f) => f.stops === 0);
     return [...list].sort((a, b) => a.price - b.price);
   }, [from, to, nonstop]);
@@ -65,7 +62,7 @@ export function FlightResults() {
         <div>
           {results.length === 0 ? (
             <div className="empty panel">
-              <p>No flights match these filters. Try another route or clear filters.</p>
+              <p>No flights on this route. Search Delhi (DEL) → Goa (GOI) for the IndiGo 6E 2145 service.</p>
             </div>
           ) : (
             <div className="result-list">

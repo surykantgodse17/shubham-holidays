@@ -27,19 +27,21 @@ export type Flight = {
   cabin: "Economy" | "Premium Economy" | "Business";
 };
 
+/** Single real-world IndiGo DEL→GOI service kept for demo booking. */
 export const flights: Flight[] = [
-  { id: "f1", airline: "IndiGo", flightNo: "6E 2145", from: "DEL", to: "GOI", depart: "06:40", arrive: "09:05", duration: "2h 25m", stops: 0, price: 4890, cabin: "Economy" },
-  { id: "f2", airline: "Vistara", flightNo: "UK 841", from: "DEL", to: "GOI", depart: "11:15", arrive: "13:50", duration: "2h 35m", stops: 0, price: 6420, cabin: "Economy" },
-  { id: "f3", airline: "Air India", flightNo: "AI 659", from: "DEL", to: "GOI", depart: "16:20", arrive: "20:45", duration: "4h 25m", stops: 1, price: 5199, cabin: "Economy" },
-  { id: "f4", airline: "IndiGo", flightNo: "6E 5301", from: "BOM", to: "BLR", depart: "08:10", arrive: "09:45", duration: "1h 35m", stops: 0, price: 3290, cabin: "Economy" },
-  { id: "f5", airline: "Akasa Air", flightNo: "QP 1522", from: "BOM", to: "BLR", depart: "14:30", arrive: "16:10", duration: "1h 40m", stops: 0, price: 2980, cabin: "Economy" },
-  { id: "f6", airline: "Vistara", flightNo: "UK 812", from: "DEL", to: "BOM", depart: "07:00", arrive: "09:10", duration: "2h 10m", stops: 0, price: 5450, cabin: "Premium Economy" },
-  { id: "f7", airline: "Emirates", flightNo: "EK 511", from: "BOM", to: "DXB", depart: "22:45", arrive: "00:15", duration: "3h 00m", stops: 0, price: 18490, cabin: "Economy" },
-  { id: "f8", airline: "Singapore Airlines", flightNo: "SQ 402", from: "DEL", to: "SIN", depart: "23:10", arrive: "07:25", duration: "5h 45m", stops: 0, price: 28900, cabin: "Economy" },
-  { id: "f9", airline: "Thai Airways", flightNo: "TG 316", from: "DEL", to: "BKK", depart: "00:40", arrive: "06:20", duration: "4h 10m", stops: 0, price: 16850, cabin: "Economy" },
-  { id: "f10", airline: "British Airways", flightNo: "BA 143", from: "DEL", to: "LON", depart: "13:55", arrive: "18:40", duration: "9h 15m", stops: 0, price: 45200, cabin: "Economy" },
-  { id: "f11", airline: "IndiGo", flightNo: "6E 6088", from: "BLR", to: "MAA", depart: "09:25", arrive: "10:30", duration: "1h 05m", stops: 0, price: 2450, cabin: "Economy" },
-  { id: "f12", airline: "Air India", flightNo: "AI 770", from: "CCU", to: "DEL", depart: "17:40", arrive: "20:05", duration: "2h 25m", stops: 0, price: 5120, cabin: "Economy" },
+  {
+    id: "f1",
+    airline: "IndiGo",
+    flightNo: "6E 2145",
+    from: "DEL",
+    to: "GOI",
+    depart: "06:40",
+    arrive: "09:05",
+    duration: "2h 25m",
+    stops: 0,
+    price: 4890,
+    cabin: "Economy",
+  },
 ];
 
 export type Hotel = {
