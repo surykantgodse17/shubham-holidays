@@ -362,6 +362,7 @@ async function postBridge(path: string, body: Record<string, string | number>) {
   }
   const res = await fetch(`${base}${path}`, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -369,7 +370,13 @@ async function postBridge(path: string, body: Record<string, string | number>) {
     body: JSON.stringify(body),
   });
   const text = await res.text();
-  let data: { error?: string; amountPi?: number; orderToken?: string; memo?: string } = {};
+  let data: {
+    error?: string;
+    amountPi?: number;
+    orderToken?: string;
+    memo?: string;
+    checkoutId?: string;
+  } = {};
   try {
     data = text ? (JSON.parse(text) as typeof data) : {};
   } catch {
@@ -381,7 +388,10 @@ async function postBridge(path: string, body: Record<string, string | number>) {
   return data;
 }
 
-/** Ask the server to look up catalog price and sign an order (never send amountInr). */
+/**
+ * Lock catalog line on the server (browser cookie session), then create a signed order
+ * from that session only — never send free-form product/qty to /api/orders.
+ */
 async function createServerOrder(opts: {
   kind: string;
   productId: string;
@@ -390,11 +400,21 @@ async function createServerOrder(opts: {
   bookingId: string;
   memo: string;
 }): Promise<{ orderToken: string; amountPi: number; memo: string }> {
-  const data = await postBridge("/api/orders", {
+  const session = await postBridge("/api/checkout/sessions", {
     kind: opts.kind,
     productId: opts.productId,
     guests: opts.guests ?? 1,
     nights: opts.nights ?? 1,
+    bookingId: opts.bookingId,
+    memo: opts.memo,
+  });
+  const checkoutId = String((session as { checkoutId?: string }).checkoutId || "");
+  if (!checkoutId) {
+    throw new Error("Server did not lock checkout. Refresh and try again.");
+  }
+
+  const data = await postBridge("/api/orders", {
+    checkoutId,
     bookingId: opts.bookingId,
     memo: opts.memo,
   });

@@ -1,19 +1,33 @@
-/** Abuse protection — shared SQL rate limits + origin/client checks. */
+/** Abuse protection — shared SQL rate limits + origin + fetch-metadata checks. */
 
 import crypto from "node:crypto";
 import { sql } from "./db.js";
+import {
+  browserCookieName,
+  browserSetCookieHeader,
+  issueBrowserId,
+  readBrowserIdFromCookieHeader,
+} from "./checkout.js";
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 30;
 const PAY_MAX = 8;
 
 function clientKey(req) {
+  // Prefer Express req.ip when trust proxy is set (ignores spoofed multi-hop XFF alone).
+  if (req.ip) return String(req.ip);
   const xf = req.headers["x-forwarded-for"];
   if (typeof xf === "string" && xf.length) return xf.split(",")[0].trim();
   return req.socket?.remoteAddress || "unknown";
 }
 
 function clientKeyFromRequest(request) {
+  // Prefer platform-injected client IP headers over raw XFF chains.
+  const realIp =
+    request.headers.get("x-real-ip") ||
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("true-client-ip");
+  if (realIp) return realIp.trim();
   const xf = request.headers.get("x-forwarded-for");
   if (xf && xf.length) return xf.split(",")[0].trim();
   return "unknown";
@@ -108,15 +122,29 @@ function hostMatches(urlString, host) {
   }
 }
 
+/** Fetch Metadata: browsers send this; reject cross-site. Curl may omit it. */
+function fetchSiteOk(secFetchSite) {
+  if (!secFetchSite) return null; // absent — rely on Origin + browser cookie elsewhere
+  const site = String(secFetchSite).toLowerCase();
+  if (site === "same-origin" || site === "same-site" || site === "none") return true;
+  return false;
+}
+
+function originAndFetchOk(origin, host, secFetchSite) {
+  if (!origin || !hostMatches(origin, host)) return false;
+  const fetchOk = fetchSiteOk(secFetchSite);
+  if (fetchOk === false) return false;
+  return true;
+}
+
 /**
- * Search/API browser guard: Origin must match this host.
- * No Referer / custom-header bypass (those are forgeable by any HTTP client).
- * Clients should POST so browsers always attach Origin.
+ * Search/API browser guard: matching Origin + reject cross-site Sec-Fetch-Site.
  */
 export function sameAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
-  if (origin && hostMatches(origin, host)) {
+  const secFetchSite = req.headers["sec-fetch-site"];
+  if (originAndFetchOk(origin, host, secFetchSite)) {
     next();
     return;
   }
@@ -131,7 +159,8 @@ export function sameAppOrigin(req, res, next) {
 export function sameAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
-  if (origin && hostMatches(origin, host)) return null;
+  const secFetchSite = request.headers.get("sec-fetch-site");
+  if (originAndFetchOk(origin, host, secFetchSite)) return null;
   return Response.json(
     { source: "error", message: "Forbidden.", flights: [], hotels: [] },
     { status: 403 },
@@ -173,11 +202,12 @@ export const PI_DEV_CSP = [
   "worker-src 'self' blob:",
 ].join("; ");
 
-/** Payment routes: Origin must match this host. */
+/** Payment/checkout routes: Origin match + reject cross-site fetch. */
 export function requireAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
-  if (!origin || !hostMatches(origin, host)) {
+  const secFetchSite = req.headers["sec-fetch-site"];
+  if (!originAndFetchOk(origin, host, secFetchSite)) {
     res.status(403).json({ ok: false, error: "Forbidden." });
     return;
   }
@@ -187,10 +217,62 @@ export function requireAppOrigin(req, res, next) {
 export function requireAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
-  if (!origin || !hostMatches(origin, host)) {
+  const secFetchSite = request.headers.get("sec-fetch-site");
+  if (!originAndFetchOk(origin, host, secFetchSite)) {
     return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
   }
   return null;
+}
+
+/**
+ * Ensure HttpOnly browser session cookie (binds checkout sessions to this browser).
+ * Express middleware — mutates req.shBrowserId.
+ */
+export function ensureBrowserSession(req, res, next) {
+  let id = readBrowserIdFromCookieHeader(req.headers.cookie);
+  if (!id) {
+    id = issueBrowserId();
+    const secure = req.secure || String(req.headers["x-forwarded-proto"] || "").includes("https");
+    res.append("Set-Cookie", browserSetCookieHeader(id, { secure }));
+  }
+  req.shBrowserId = id;
+  next();
+}
+
+/** For Fetch API handlers: return { browserId, setCookie? }. */
+export function ensureBrowserSessionWeb(request) {
+  let id = readBrowserIdFromCookieHeader(request.headers.get("cookie"));
+  let setCookie = null;
+  if (!id) {
+    id = issueBrowserId();
+    const url = new URL(request.url);
+    const secure = url.protocol === "https:";
+    setCookie = browserSetCookieHeader(id, { secure });
+  }
+  return { browserId: id, setCookie };
+}
+
+export function requireBrowserSession(req, res, next) {
+  const id = readBrowserIdFromCookieHeader(req.headers.cookie) || req.shBrowserId;
+  if (!id) {
+    res.status(403).json({ ok: false, error: "Missing browser session. Refresh and try again." });
+    return;
+  }
+  req.shBrowserId = id;
+  next();
+}
+
+export function requireBrowserSessionWeb(request) {
+  const id = readBrowserIdFromCookieHeader(request.headers.get("cookie"));
+  if (!id) {
+    return {
+      error: Response.json(
+        { ok: false, error: "Missing browser session. Refresh and try again." },
+        { status: 403 },
+      ),
+    };
+  }
+  return { browserId: id };
 }
 
 export function paymentRateLimit(req, res, next) {
@@ -221,3 +303,5 @@ export async function paymentRateLimitWeb(request) {
     return Response.json({ ok: false, error: "Payments temporarily unavailable." }, { status: 503 });
   }
 }
+
+export { browserCookieName };

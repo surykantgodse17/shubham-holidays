@@ -135,7 +135,7 @@ async function assertPaymentMatchesOrder(payment, caller, orderTokenFromBody) {
   const order = verifyOrderTicket(orderToken, caller.uid);
 
   const payUid = paymentUserUid(payment);
-  if (payUid && payUid !== caller.uid) {
+  if (!payUid || payUid !== caller.uid) {
     const err = new Error("Payment does not belong to this Pi user.");
     err.status = 403;
     throw err;

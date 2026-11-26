@@ -1,30 +1,53 @@
 import { requirePiCaller } from "../server/payments.js";
 import { createOrderTicket } from "../server/orders.js";
-import { paymentRateLimitWeb, requireAppOriginWeb } from "../server/security.js";
+import { consumeCheckoutSession } from "../server/checkout.js";
+import {
+  paymentRateLimitWeb,
+  requireAppOriginWeb,
+  requireBrowserSessionWeb,
+} from "../server/security.js";
 
 export async function POST(request) {
   const limited = await paymentRateLimitWeb(request);
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;
+  const browser = requireBrowserSessionWeb(request);
+  if (browser.error) return browser.error;
 
   try {
     const caller = await requirePiCaller(request.headers.get("authorization"));
     const body = await request.json().catch(() => ({}));
-    const order = createOrderTicket({
-      uid: caller.uid,
+    const checkoutId = String(body.checkoutId || body.checkoutSessionId || "").trim();
+    if (!checkoutId) {
+      return Response.json(
+        { ok: false, error: "Missing checkout session. Start checkout again." },
+        { status: 400 },
+      );
+    }
+
+    // Price only from server-stored session — ignore client kind/productId/guests/nights.
+    const locked = await consumeCheckoutSession({
+      checkoutId,
+      browserId: browser.browserId,
       bookingId: body.bookingId,
-      kind: body.kind,
-      productId: body.productId || body.id,
-      guests: body.guests,
-      nights: body.nights,
       memo: body.memo,
     });
-    return Response.json({ ok: true, ...order });
+
+    const order = createOrderTicket({
+      uid: caller.uid,
+      bookingId: locked.bookingId || body.bookingId,
+      kind: locked.kind,
+      productId: locked.productId,
+      guests: locked.guests,
+      nights: locked.nights,
+      memo: locked.memo,
+    });
+    return Response.json({ ok: true, checkoutId, ...order });
   } catch (err) {
     const status = err?.status || 500;
     const safe =
-      status === 401 || status === 400 || status === 403 || status === 503
+      status === 401 || status === 400 || status === 403 || status === 404 || status === 409 || status === 503
         ? err.message
         : "Could not create order.";
     return Response.json({ ok: false, error: safe }, { status });

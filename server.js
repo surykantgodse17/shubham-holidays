@@ -4,11 +4,14 @@ import { fileURLToPath } from "node:url";
 import { searchFlights, searchHotels, normalizeAirport } from "./server/travel.js";
 import { approvePayment, completePayment, requirePiCaller } from "./server/payments.js";
 import { createOrderTicket } from "./server/orders.js";
+import { createCheckoutSession, consumeCheckoutSession } from "./server/checkout.js";
 import {
   rateLimit,
   sameAppOrigin,
   requireAppOrigin,
   paymentRateLimit,
+  ensureBrowserSession,
+  requireBrowserSession,
   safeApiError,
   PI_SANDBOX_CSP,
   PI_DEV_CSP,
@@ -39,7 +42,8 @@ async function createApp() {
   });
 
   const protect = [rateLimit, sameAppOrigin];
-  const protectPay = [paymentRateLimit, requireAppOrigin];
+  const protectPay = [paymentRateLimit, requireAppOrigin, ensureBrowserSession];
+  const protectCheckout = [paymentRateLimit, requireAppOrigin, ensureBrowserSession];
 
   async function flightsHandler(req, res) {
     try {
@@ -74,23 +78,57 @@ async function createApp() {
   app.post("/api/hotels", ...protect, hotelsHandler);
   app.get("/api/hotels", ...protect, hotelsHandler);
 
-  app.post("/api/orders", ...protectPay, async (req, res) => {
+  app.post("/api/checkout/sessions", ...protectCheckout, async (req, res) => {
     try {
-      const caller = await requirePiCaller(req.headers.authorization);
-      const order = createOrderTicket({
-        uid: caller.uid,
-        bookingId: req.body?.bookingId,
+      const session = await createCheckoutSession({
+        browserId: req.shBrowserId,
         kind: req.body?.kind,
         productId: req.body?.productId || req.body?.id,
         guests: req.body?.guests,
         nights: req.body?.nights,
+        bookingId: req.body?.bookingId,
         memo: req.body?.memo,
       });
-      res.json({ ok: true, ...order });
+      res.json({ ok: true, ...session });
     } catch (err) {
       const status = err?.status || 500;
       const safe =
-        status === 401 || status === 400 || status === 403 || status === 503
+        status === 401 || status === 400 || status === 403 || status === 404 || status === 503
+          ? err.message
+          : "Could not start checkout.";
+      res.status(status).json({ ok: false, error: safe });
+    }
+  });
+
+  app.post("/api/orders", ...protectPay, requireBrowserSession, async (req, res) => {
+    try {
+      const caller = await requirePiCaller(req.headers.authorization);
+      const checkoutId = String(req.body?.checkoutId || req.body?.checkoutSessionId || "").trim();
+      if (!checkoutId) {
+        res.status(400).json({ ok: false, error: "Missing checkout session. Start checkout again." });
+        return;
+      }
+      // Price only from server-stored session — ignore client kind/productId/qty.
+      const locked = await consumeCheckoutSession({
+        checkoutId,
+        browserId: req.shBrowserId,
+        bookingId: req.body?.bookingId,
+        memo: req.body?.memo,
+      });
+      const order = createOrderTicket({
+        uid: caller.uid,
+        bookingId: locked.bookingId || req.body?.bookingId,
+        kind: locked.kind,
+        productId: locked.productId,
+        guests: locked.guests,
+        nights: locked.nights,
+        memo: locked.memo,
+      });
+      res.json({ ok: true, checkoutId, ...order });
+    } catch (err) {
+      const status = err?.status || 500;
+      const safe =
+        status === 401 || status === 400 || status === 403 || status === 404 || status === 409 || status === 503
           ? err.message
           : "Could not create order.";
       res.status(status).json({ ok: false, error: safe });
