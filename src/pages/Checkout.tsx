@@ -152,6 +152,11 @@ export function Checkout() {
         nights: Number(cart!.meta?.nights || 1),
         memo,
         bookingId,
+        guestName: cart!.meta?.guest || cart!.meta?.passenger || "Guest",
+        email: cart!.meta?.email || "guest@example.com",
+        title: cart!.title,
+        subtitle: cart!.subtitle,
+        amountInr: cart!.amount,
       });
       await finishBooking(bookingId, "Pi (Mainnet)", result.amountPi, {
         status: "confirmed",

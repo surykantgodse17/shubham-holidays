@@ -196,6 +196,15 @@ async function createApp() {
         req.body?.txid,
         req.headers.authorization,
         req.body?.orderToken,
+        {
+          bookingId: req.body?.bookingId,
+          guestName: req.body?.guestName,
+          email: req.body?.email,
+          title: req.body?.title,
+          subtitle: req.body?.subtitle,
+          amountInr: req.body?.amountInr,
+          meta: req.body?.meta,
+        },
       );
       res.json({ ok: true, data });
     } catch (err) {

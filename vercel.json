@@ -2,6 +2,12 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "framework": null,
+  "build": {
+    "env": {
+      "VITE_PI_SANDBOX": "false"
+    }
+  },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health" },
     { "source": "/api/flights", "destination": "/api/flights" },

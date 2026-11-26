@@ -9,6 +9,7 @@
 import { verifyOrderTicket } from "./orders.js";
 import { piAmountsEqual } from "./pricing.js";
 import { sql } from "./db.js";
+import { saveConfirmedBooking } from "./bookings.js";
 
 const PI_API_BASE = (process.env.PI_API_BASE || "https://api.minepi.com/v2").replace(/\/$/, "");
 
@@ -240,7 +241,13 @@ export async function approvePayment(paymentId, authorizationHeader, orderToken)
   });
 }
 
-export async function completePayment(paymentId, txid, authorizationHeader, orderToken) {
+export async function completePayment(
+  paymentId,
+  txid,
+  authorizationHeader,
+  orderToken,
+  bookingDetails = {},
+) {
   const caller = await requirePiCaller(authorizationHeader);
   const id = String(paymentId || "").trim();
   const tx = String(txid || "").trim();
@@ -253,8 +260,27 @@ export async function completePayment(paymentId, txid, authorizationHeader, orde
   const payment = await getPayment(id);
   const order = await assertPaymentMatchesOrder(payment, caller, orderToken);
   await claimOrderTicketForPayment(order, id, "complete");
-  return piKeyFetch(`/payments/${encodeURIComponent(id)}/complete`, {
+  const piResult = await piKeyFetch(`/payments/${encodeURIComponent(id)}/complete`, {
     method: "POST",
     body: { txid: tx },
   });
+
+  const booking = await saveConfirmedBooking({
+    bookingId: bookingDetails.bookingId || order.bookingId,
+    paymentId: id,
+    txid: tx,
+    piUid: caller.uid,
+    order,
+    guestName: bookingDetails.guestName,
+    email: bookingDetails.email,
+    title: bookingDetails.title || order.title,
+    subtitle: bookingDetails.subtitle,
+    amountInr: bookingDetails.amountInr,
+    meta: {
+      ...(bookingDetails.meta && typeof bookingDetails.meta === "object" ? bookingDetails.meta : {}),
+      piUsername: caller.username || "",
+    },
+  });
+
+  return { ...piResult, booking };
 }

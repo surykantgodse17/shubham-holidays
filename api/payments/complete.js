@@ -14,6 +14,15 @@ export async function POST(request) {
       body.txid,
       request.headers.get("authorization"),
       body.orderToken,
+      {
+        bookingId: body.bookingId,
+        guestName: body.guestName,
+        email: body.email,
+        title: body.title,
+        subtitle: body.subtitle,
+        amountInr: body.amountInr,
+        meta: body.meta,
+      },
     );
     return Response.json({ ok: true, data });
   } catch (err) {

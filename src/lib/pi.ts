@@ -354,7 +354,10 @@ export async function connectPiForCheckout(
   }
 }
 
-async function postBridge(path: string, body: Record<string, string | number>) {
+async function postBridge(
+  path: string,
+  body: Record<string, string | number | Record<string, string> | undefined>,
+) {
   const base = piBridgeBase();
   const token = getPiAccessToken();
   if (!token) {
@@ -477,7 +480,7 @@ export async function payWithSandboxDemo(opts: {
 
 /**
  * Mainnet Pi payment via Pi.authenticate + Pi.createPayment (SDK init with sandbox: false).
- * Does not fall back to the local non-payment demo.
+ * Flow: createPayment → approve → complete → persist booking. Amount from server catalog only.
  */
 export async function payWithPi(opts: {
   kind: string;
@@ -486,6 +489,11 @@ export async function payWithPi(opts: {
   nights?: number;
   memo: string;
   bookingId: string;
+  guestName?: string;
+  email?: string;
+  title?: string;
+  subtitle?: string;
+  amountInr?: number;
 }): Promise<PiPaymentResult> {
   if (!opts.kind || !opts.productId) throw new Error("Missing product for checkout.");
 
@@ -509,7 +517,7 @@ export async function payWithPi(opts: {
     throw new Error("Pi authenticate did not return an access token. Retry Sign in with Pi.");
   }
 
-  // Server looks up catalog price — client never supplies amountInr.
+  // Server looks up catalog price — client never supplies the Pi amount.
   const order = await createServerOrder({
     kind: opts.kind,
     productId: opts.productId,
@@ -545,7 +553,17 @@ export async function payWithPi(opts: {
               );
             },
             onReadyForServerCompletion(paymentId, txid) {
-              postBridge("/api/payments/complete", { paymentId, txid, orderToken })
+              postBridge("/api/payments/complete", {
+                paymentId,
+                txid,
+                orderToken,
+                bookingId: opts.bookingId,
+                guestName: opts.guestName || "Guest",
+                email: opts.email || "",
+                title: opts.title || "",
+                subtitle: opts.subtitle || "",
+                amountInr: opts.amountInr ?? 0,
+              })
                 .then(() =>
                   finish(true, {
                     mode: "pi",
