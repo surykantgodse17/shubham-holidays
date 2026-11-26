@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { BrandLogo } from "../components/BrandLogo";
 import { formatINR } from "../data/mock";
+import { formatPi } from "../lib/pi";
 import { getBookings } from "../lib/storage";
 
 export function Confirmation() {
@@ -22,6 +24,7 @@ export function Confirmation() {
   return (
     <div className="page">
       <div className="shell confirm-wrap">
+        <BrandLogo size="lg" />
         <div className="check" aria-hidden>
           ✓
         </div>
@@ -48,9 +51,15 @@ export function Confirmation() {
             <span>{booking.paymentMethod}</span>
           </div>
           <div className="summary-row">
-            <span>Paid</span>
+            <span>Catalog (INR)</span>
             <span>{formatINR(booking.amount)}</span>
           </div>
+          {booking.meta?.amountPi ? (
+            <div className="summary-row">
+              <span>Paid in Pi</span>
+              <span>{formatPi(Number(booking.meta.amountPi))}</span>
+            </div>
+          ) : null}
         </div>
 
         <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>

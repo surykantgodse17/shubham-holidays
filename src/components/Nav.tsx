@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { BrandLogo } from "./BrandLogo";
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,13 +21,7 @@ export function Nav() {
     <header className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="nav-inner">
         <Link to="/" className="brand" onClick={() => setOpen(false)}>
-          <span className="brand-mark" aria-hidden>
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M4 16c4-8 12-8 16 0" stroke="#f3f7f4" strokeWidth="2.2" strokeLinecap="round" />
-              <circle cx="12" cy="8" r="2.2" fill="#d97706" />
-            </svg>
-          </span>
-          Shubham Holidays
+          <BrandLogo size="sm" withWordmark />
         </Link>
 
         <button

@@ -1,7 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BrandLogo } from "../components/BrandLogo";
+import { Steps } from "../components/Steps";
 import { formatINR } from "../data/mock";
+import {
+  formatPi,
+  inPiBrowser,
+  initPiSdk,
+  inrToPi,
+  inrToUsd,
+  isPiSandbox,
+  isPiSdkAvailable,
+  payWithPi,
+  PI_USD_VALUE,
+  piBridgeBase,
+} from "../lib/pi";
 import {
   addBooking,
   clearCart,
@@ -9,29 +23,29 @@ import {
   makeBookingId,
   type CartItem,
 } from "../lib/storage";
-import { Steps } from "../components/Steps";
-
-type PayMethod = "card" | "upi" | "netbanking";
 
 export function Checkout() {
   const navigate = useNavigate();
   const [cart, setCartState] = useState<CartItem | null>(null);
-  const [method, setMethod] = useState<PayMethod>("card");
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [upi, setUpi] = useState("");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [piReady, setPiReady] = useState(false);
 
   useEffect(() => {
     setCartState(getCart());
+    setPiReady(initPiSdk() && isPiSdkAvailable());
   }, []);
+
+  const amountPi = useMemo(() => (cart ? inrToPi(cart.amount) : 0), [cart]);
+  const amountUsd = useMemo(() => (cart ? inrToUsd(cart.amount) : 0), [cart]);
+  const inBrowser = inPiBrowser();
+  const sandbox = isPiSandbox();
+  const hasBridge = Boolean(piBridgeBase());
 
   if (!cart) {
     return (
       <div className="page shell empty">
+        <BrandLogo size="lg" />
         <p>Your checkout is empty. Search a flight, hotel, or experience first.</p>
         <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
           <Link to="/flights" className="btn btn-sea">
@@ -48,27 +62,25 @@ export function Checkout() {
     );
   }
 
-  function onPay(e: FormEvent) {
+  async function onPay(e: FormEvent) {
     e.preventDefault();
     setError("");
-
-    if (method === "card") {
-      const digits = cardNumber.replace(/\s/g, "");
-      if (digits.length < 12 || !expiry || cvv.length < 3 || !cardName.trim()) {
-        setError("Enter mock card details to continue (sandbox only).");
-        return;
-      }
-    }
-    if (method === "upi" && !upi.includes("@")) {
-      setError("Enter a mock UPI ID like name@okbank.");
-      return;
-    }
-
     setProcessing(true);
-    window.setTimeout(() => {
-      const guestName = cart!.meta?.guest || cart!.meta?.passenger || cardName || "Guest";
+
+    const bookingId = makeBookingId();
+    const memo = `Shubham Holidays · ${cart!.title}`.slice(0, 120);
+
+    try {
+      const allowSandboxDemo = !inBrowser || !piReady || !hasBridge;
+      const result = await payWithPi({
+        amountInr: cart!.amount,
+        memo,
+        bookingId,
+        allowSandboxDemo,
+      });
+
+      const guestName = cart!.meta?.guest || cart!.meta?.passenger || "Guest";
       const email = cart!.meta?.email || "guest@example.com";
-      const bookingId = makeBookingId();
       addBooking({
         ...cart!,
         bookingId,
@@ -76,20 +88,37 @@ export function Checkout() {
         guestName,
         email,
         paymentMethod:
-          method === "card" ? "Card (sandbox)" : method === "upi" ? "UPI (sandbox)" : "Net banking (sandbox)",
+          result.mode === "pi"
+            ? `Pi Network${sandbox ? " (sandbox)" : ""}`
+            : "Pi (sandbox demo)",
         status: "confirmed",
+        meta: {
+          ...cart!.meta,
+          amountPi: String(result.amountPi),
+          piPaymentId: result.paymentId || "",
+          piTxid: result.txid || "",
+        },
       });
       clearCart();
       navigate(`/confirmation?id=${bookingId}`);
-    }, 900);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Pi payment failed.");
+    } finally {
+      setProcessing(false);
+    }
   }
 
   return (
     <div className="page">
-      <div className="shell page-hero">
+      <div className="shell page-hero checkout-hero">
+        <BrandLogo size="lg" />
         <span className="eyebrow">Checkout</span>
-        <h1>Secure payment</h1>
-        <p>Sandbox checkout — no real charges, no payment credentials stored.</p>
+        <h1>Pay with Pi</h1>
+        <p>
+          Fares are shown in INR and charged in Pi at the demo rate{" "}
+          <strong>1 π = ${PI_USD_VALUE.toLocaleString("en-US")}</strong>
+          {sandbox ? " · Pi sandbox mode" : ""}.
+        </p>
         <Steps
           items={[
             { label: "Search", state: "done" },
@@ -102,111 +131,47 @@ export function Checkout() {
 
       <div className="shell book-layout">
         <form className="panel" onSubmit={onPay}>
-          <h2>Payment method</h2>
-          <div className="pay-methods">
-            {(
-              [
-                ["card", "Card"],
-                ["upi", "UPI"],
-                ["netbanking", "Net banking"],
-              ] as const
-            ).map(([id, label]) => (
-              <label key={id} className="pay-option">
-                <input
-                  type="radio"
-                  name="pay"
-                  checked={method === id}
-                  onChange={() => setMethod(id)}
-                />
-                <span>{label}</span>
-                <span className="badge badge-sample" style={{ marginLeft: "auto" }}>
-                  Sandbox
-                </span>
-              </label>
-            ))}
+          <h2>Pi Network payment</h2>
+
+          <label className="pay-option" style={{ marginBottom: "1rem" }}>
+            <input type="radio" name="pay" checked readOnly />
+            <span>Pay with Pi</span>
+            <span className="badge badge-amber" style={{ marginLeft: "auto" }}>
+              {sandbox ? "Sandbox" : "Mainnet"}
+            </span>
+          </label>
+
+          <div className="pi-status">
+            {inBrowser && piReady ? (
+              <p>
+                Pi Browser detected{hasBridge ? " — live Pi payment flow ready." : " — no payment bridge configured; sandbox demo will complete the booking."}
+              </p>
+            ) : (
+              <p>
+                Outside Pi Browser (or SDK unavailable): use the <strong>sandbox demo</strong> to complete a mock Pi payment. Open in Pi Browser with a payment bridge for the real SDK flow.
+              </p>
+            )}
           </div>
-
-          {method === "card" && (
-            <div className="form-grid">
-              <div className="field full">
-                <label htmlFor="cardName">Name on card</label>
-                <input
-                  id="cardName"
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value)}
-                  placeholder="As on card"
-                  autoComplete="cc-name"
-                />
-              </div>
-              <div className="field full">
-                <label htmlFor="cardNumber">Card number</label>
-                <input
-                  id="cardNumber"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  placeholder="4111 1111 1111 1111"
-                  inputMode="numeric"
-                  autoComplete="cc-number"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="expiry">Expiry</label>
-                <input
-                  id="expiry"
-                  value={expiry}
-                  onChange={(e) => setExpiry(e.target.value)}
-                  placeholder="MM/YY"
-                  autoComplete="cc-exp"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="cvv">CVV</label>
-                <input
-                  id="cvv"
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value)}
-                  placeholder="123"
-                  inputMode="numeric"
-                  autoComplete="cc-csc"
-                />
-              </div>
-            </div>
-          )}
-
-          {method === "upi" && (
-            <div className="field">
-              <label htmlFor="upi">UPI ID</label>
-              <input
-                id="upi"
-                value={upi}
-                onChange={(e) => setUpi(e.target.value)}
-                placeholder="name@okbank"
-              />
-            </div>
-          )}
-
-          {method === "netbanking" && (
-            <div className="field">
-              <label htmlFor="bank">Bank</label>
-              <select id="bank" defaultValue="hdfc">
-                <option value="hdfc">HDFC Bank (demo)</option>
-                <option value="icici">ICICI Bank (demo)</option>
-                <option value="sbi">State Bank of India (demo)</option>
-              </select>
-            </div>
-          )}
 
           {error && <p className="error-text">{error}</p>}
           <p className="pay-note">
-            This is a mock payment screen. Nothing is charged and no payment details leave your browser.
+            No Pi API secrets are embedded in this client. Server approve/complete uses an optional bridge URL only.
           </p>
 
-          <button type="submit" className="btn btn-primary" style={{ marginTop: "1.15rem", width: "100%" }} disabled={processing}>
-            {processing ? "Processing…" : `Pay ${formatINR(cart.amount)}`}
+          <button
+            type="submit"
+            className="btn btn-primary btn-pi"
+            style={{ marginTop: "1.15rem", width: "100%" }}
+            disabled={processing}
+          >
+            {processing ? "Waiting for Pi…" : `Pay ${formatPi(amountPi)}`}
           </button>
         </form>
 
         <aside className="panel">
+          <div className="checkout-aside-brand">
+            <BrandLogo size="sm" withWordmark />
+          </div>
           <h2>Order</h2>
           <div className="summary-row">
             <span>Item</span>
@@ -217,12 +182,16 @@ export function Checkout() {
             <span style={{ textAlign: "right", maxWidth: "14rem" }}>{cart.subtitle}</span>
           </div>
           <div className="summary-row">
-            <span>Type</span>
-            <span style={{ textTransform: "capitalize" }}>{cart.kind}</span>
+            <span>Catalog (INR)</span>
+            <span>{formatINR(cart.amount)}</span>
           </div>
           <div className="summary-row">
-            <span>Total</span>
-            <span>{formatINR(cart.amount)}</span>
+            <span>≈ USD (demo)</span>
+            <span>${amountUsd.toFixed(2)}</span>
+          </div>
+          <div className="summary-row">
+            <span>Payable in Pi</span>
+            <span>{formatPi(amountPi)}</span>
           </div>
         </aside>
       </div>

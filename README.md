@@ -1,32 +1,40 @@
-# React + TypeScript + Vite
+# Shubham Holidays
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Brand-first travel booking: flights, hotels, curated packages/experiences, and **Pay with Pi**. Catalog prices are sample INR data. Pi amounts use the demo rate **1 π = US$314,159**. Outside Pi Browser (or without a payment bridge), checkout completes a labeled **Pi sandbox demo**. No Pi API secrets ship in the client.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open `http://127.0.0.1:5173`.
+
+## Key routes (HashRouter)
+
+| Route | Purpose |
+| --- | --- |
+| `/#/` | Landing + search |
+| `/#/flights` | Flight search |
+| `/#/flights/results` | Flight results |
+| `/#/flights/book` | Passenger details |
+| `/#/hotels` | Hotel search |
+| `/#/hotels/results` | Hotel results |
+| `/#/hotels/book` | Guest details |
+| `/#/explore` | Packages & experiences |
+| `/#/explore/:id` | Listing detail |
+| `/#/checkout` | Pay with Pi |
+| `/#/confirmation` | Booking confirmed |
+| `/#/bookings` | Saved demo bookings |
+
+## Pi payment
+
+- Loads the official Pi SDK (`sdk.minepi.com`).
+- Sandbox mode by default (`VITE_PI_SANDBOX`, defaults to true).
+- Optional `VITE_PI_BRIDGE_URL` for server approve/complete (API key stays on that bridge — never in this app).
+- Without Pi Browser or bridge: **sandbox demo** completes the booking in-browser.
+
+## Brand
+
+Logo asset: `public/logo.jpg` (used in nav, landing hero, checkout, confirmation, footer).

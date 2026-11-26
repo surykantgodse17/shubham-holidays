@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BrandLogo } from "../components/BrandLogo";
 import { cities, destinations } from "../data/mock";
 
 type Tab = "flights" | "hotels" | "explore";
@@ -30,7 +31,10 @@ export function Home() {
       <section className="hero" aria-label="Shubham Holidays hero">
         <div className="hero-media" role="img" aria-label="Mountain landscape at dusk" />
         <div className="hero-content">
-          <p className="hero-brand">Shubham Holidays</p>
+          <div className="hero-brand-row">
+            <BrandLogo size="hero" inverted />
+            <p className="hero-brand">Shubham Holidays</p>
+          </div>
           <h1 className="hero-headline">Travel that feels considered</h1>
           <p className="hero-sub">
             Search flights and stays, then book curated packages and local experiences — all in one calm flow.

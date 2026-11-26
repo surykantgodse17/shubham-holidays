@@ -150,19 +150,85 @@ p {
   letter-spacing: -0.03em;
 }
 
-.brand-mark {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.55rem;
-  background: var(--sea);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-.brand-mark svg {
-  width: 1.15rem;
-  height: 1.15rem;
+.brand-logo-img {
+  border-radius: 0.55rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(14, 64, 56, 0.18);
+  background: var(--white);
+}
+
+.brand-logo.inverted .brand-logo-img {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.brand-logo-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+}
+
+.hero-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.hero-brand-row .hero-brand {
+  margin-bottom: 0;
+}
+
+.checkout-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.checkout-hero .brand-logo {
+  margin-bottom: 0.5rem;
+}
+
+.checkout-aside-brand {
+  margin-bottom: 0.85rem;
+}
+
+.footer-brand .brand-logo {
+  margin-bottom: 0.15rem;
+}
+
+.pi-status {
+  background: rgba(26, 107, 92, 0.06);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.5rem;
+}
+
+.btn-pi {
+  font-size: 1.02rem;
+}
+
+.confirm-wrap .brand-logo {
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.empty .brand-logo {
+  justify-content: center;
+  margin: 0 auto 1rem;
 }
 
 .nav-links {
