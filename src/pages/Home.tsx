@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BrandLogo } from "../components/BrandLogo";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import {
   cities,
@@ -40,7 +39,16 @@ export function Home() {
         <div className="hero-media" role="img" aria-label="Mountain landscape at dusk" />
         <div className="hero-content">
           <div className="hero-brand-row">
-            <BrandLogo size="hero" inverted />
+            <div className="hero-logo-frame">
+              <img
+                src="/logo-full.png"
+                alt="Shubham Holidays"
+                className="hero-logo"
+                width={280}
+                height={123}
+                decoding="async"
+              />
+            </div>
             <p className="hero-brand">Shubham Holidays</p>
           </div>
           <h1 className="hero-headline">Travel that feels considered</h1>

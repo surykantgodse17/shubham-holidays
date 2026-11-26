@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { BrandLogo } from "./BrandLogo";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "../lib/contact";
 
 export function Footer() {
@@ -7,7 +6,14 @@ export function Footer() {
     <footer className="footer">
       <div className="shell footer-inner">
         <div className="footer-brand">
-          <BrandLogo size="md" withWordmark />
+          <img
+            src="/logo-full.png"
+            alt="Shubham Holidays"
+            className="footer-logo"
+            width={160}
+            height={70}
+            decoding="async"
+          />
           <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
         </div>
         <div className="footer-links">
