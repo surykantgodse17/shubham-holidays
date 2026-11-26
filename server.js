@@ -2,7 +2,8 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { searchFlights, searchHotels, normalizeAirport } from "./server/travel.js";
-import { approvePayment, completePayment } from "./server/payments.js";
+import { approvePayment, completePayment, requirePiCaller } from "./server/payments.js";
+import { createOrderTicket } from "./server/orders.js";
 import {
   rateLimit,
   sameAppOrigin,
@@ -23,8 +24,6 @@ async function createApp() {
   app.set("trust proxy", 1);
   app.use(express.json({ limit: "64kb" }));
 
-  // Pi Sandbox embed: no X-Frame-Options; allow pinet/minepi ancestors.
-  // Dev CSP permits Vite HMR/inline; prod CSP is stricter.
   app.use((_req, res, next) => {
     res.removeHeader("X-Frame-Options");
     res.setHeader("Content-Security-Policy", isProd ? PI_SANDBOX_CSP : PI_DEV_CSP);
@@ -68,14 +67,38 @@ async function createApp() {
     }
   });
 
+  app.post("/api/orders", ...protectPay, async (req, res) => {
+    try {
+      const caller = await requirePiCaller(req.headers.authorization);
+      const order = createOrderTicket({
+        uid: caller.uid,
+        bookingId: req.body?.bookingId,
+        amountInr: req.body?.amountInr,
+        memo: req.body?.memo,
+      });
+      res.json({ ok: true, ...order });
+    } catch (err) {
+      const status = err?.status || 500;
+      const safe =
+        status === 401 || status === 400 || status === 403 || status === 503
+          ? err.message
+          : "Could not create order.";
+      res.status(status).json({ ok: false, error: safe });
+    }
+  });
+
   app.post("/api/payments/approve", ...protectPay, async (req, res) => {
     try {
-      const data = await approvePayment(req.body?.paymentId, req.headers.authorization);
+      const data = await approvePayment(
+        req.body?.paymentId,
+        req.headers.authorization,
+        req.body?.orderToken,
+      );
       res.json({ ok: true, data });
     } catch (err) {
       const status = err?.status || 500;
       const safe =
-        status === 401 || status === 400 || status === 503
+        status === 401 || status === 400 || status === 403 || status === 503
           ? err.message
           : "Payment approval failed.";
       res.status(status).json({ ok: false, error: safe });
@@ -88,12 +111,13 @@ async function createApp() {
         req.body?.paymentId,
         req.body?.txid,
         req.headers.authorization,
+        req.body?.orderToken,
       );
       res.json({ ok: true, data });
     } catch (err) {
       const status = err?.status || 500;
       const safe =
-        status === 401 || status === 400 || status === 503
+        status === 401 || status === 400 || status === 403 || status === 503
           ? err.message
           : "Payment completion failed.";
       res.status(status).json({ ok: false, error: safe });

@@ -13,12 +13,13 @@ export async function POST(request) {
       body.paymentId,
       body.txid,
       request.headers.get("authorization"),
+      body.orderToken,
     );
     return Response.json({ ok: true, data });
   } catch (err) {
     const status = err?.status || 500;
     const safe =
-      status === 401 || status === 400 || status === 503
+      status === 401 || status === 400 || status === 403 || status === 503
         ? err.message
         : "Payment completion failed.";
     return Response.json({ ok: false, error: safe }, { status });

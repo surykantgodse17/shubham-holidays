@@ -1,8 +1,13 @@
 /**
  * Pi Network payment bridge (server-only).
- * Uses PI_NETWORK_API_KEY from the environment — never expose to the client.
- * Approve/complete require a verified Pi user access token (Bearer).
+ * Approve/complete require:
+ * 1) verified Pi user Bearer token
+ * 2) server-signed order ticket
+ * 3) Pi payment amount/metadata matching that order
  */
+
+import { verifyOrderTicket } from "./orders.js";
+import { piAmountsEqual } from "./pricing.js";
 
 const PI_API_BASE = (process.env.PI_API_BASE || "https://api.minepi.com/v2").replace(/\/$/, "");
 
@@ -14,10 +19,6 @@ export function paymentsReady() {
   return Boolean(piApiKey());
 }
 
-/**
- * Verify the caller is a signed-in Pi user by validating their access token
- * with Pi's /me endpoint. Anonymous paymentId/txid alone is not enough.
- */
 export async function verifyPiAccessToken(accessToken) {
   const token = String(accessToken || "").trim();
   if (!token) {
@@ -71,7 +72,7 @@ export async function requirePiCaller(authorizationHeader) {
   return verifyPiAccessToken(extractBearer(authorizationHeader));
 }
 
-async function piFetch(path, body) {
+async function piKeyFetch(path, { method = "GET", body } = {}) {
   const key = piApiKey();
   if (!key) {
     const err = new Error(
@@ -82,12 +83,13 @@ async function piFetch(path, body) {
   }
 
   const res = await fetch(`${PI_API_BASE}${path}`, {
-    method: "POST",
+    method,
     headers: {
       Authorization: `Key ${key}`,
-      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(body ? { "Content-Type": "application/json" } : {}),
     },
-    body: JSON.stringify(body || {}),
+    body: body ? JSON.stringify(body) : undefined,
   });
 
   const text = await res.text();
@@ -110,19 +112,71 @@ async function piFetch(path, body) {
   return data;
 }
 
-export async function approvePayment(paymentId, authorizationHeader) {
-  await requirePiCaller(authorizationHeader);
+async function getPayment(paymentId) {
+  return piKeyFetch(`/payments/${encodeURIComponent(paymentId)}`);
+}
+
+function paymentUserUid(payment) {
+  return String(
+    payment?.user_uid ||
+      payment?.uid ||
+      payment?.user?.uid ||
+      payment?.from_uid ||
+      "",
+  );
+}
+
+/**
+ * Bind a Pi platform payment to a server-signed order before approve/complete.
+ */
+async function assertPaymentMatchesOrder(payment, caller, orderTokenFromBody) {
+  const meta = payment?.metadata || {};
+  const orderToken = String(orderTokenFromBody || meta.orderToken || meta.order_token || "").trim();
+  const order = verifyOrderTicket(orderToken, caller.uid);
+
+  const payUid = paymentUserUid(payment);
+  if (payUid && payUid !== caller.uid) {
+    const err = new Error("Payment does not belong to this Pi user.");
+    err.status = 403;
+    throw err;
+  }
+
+  const payAmount = Number(payment?.amount);
+  if (!piAmountsEqual(payAmount, order.amountPi)) {
+    const err = new Error("Payment amount does not match the server order.");
+    err.status = 403;
+    throw err;
+  }
+
+  const metaBooking = String(meta.bookingId || meta.booking_id || "").trim();
+  if (metaBooking && metaBooking !== order.bookingId) {
+    const err = new Error("Payment booking does not match the server order.");
+    err.status = 403;
+    throw err;
+  }
+
+  return order;
+}
+
+export async function approvePayment(paymentId, authorizationHeader, orderToken) {
+  const caller = await requirePiCaller(authorizationHeader);
   const id = String(paymentId || "").trim();
   if (!id) {
     const err = new Error("Missing paymentId.");
     err.status = 400;
     throw err;
   }
-  return piFetch(`/payments/${encodeURIComponent(id)}/approve`, {});
+
+  const payment = await getPayment(id);
+  await assertPaymentMatchesOrder(payment, caller, orderToken);
+  return piKeyFetch(`/payments/${encodeURIComponent(id)}/approve`, {
+    method: "POST",
+    body: {},
+  });
 }
 
-export async function completePayment(paymentId, txid, authorizationHeader) {
-  await requirePiCaller(authorizationHeader);
+export async function completePayment(paymentId, txid, authorizationHeader, orderToken) {
+  const caller = await requirePiCaller(authorizationHeader);
   const id = String(paymentId || "").trim();
   const tx = String(txid || "").trim();
   if (!id || !tx) {
@@ -130,5 +184,11 @@ export async function completePayment(paymentId, txid, authorizationHeader) {
     err.status = 400;
     throw err;
   }
-  return piFetch(`/payments/${encodeURIComponent(id)}/complete`, { txid: tx });
+
+  const payment = await getPayment(id);
+  await assertPaymentMatchesOrder(payment, caller, orderToken);
+  return piKeyFetch(`/payments/${encodeURIComponent(id)}/complete`, {
+    method: "POST",
+    body: { txid: tx },
+  });
 }

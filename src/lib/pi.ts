@@ -340,7 +340,7 @@ export async function connectPiForCheckout(
   }
 }
 
-async function postBridge(path: string, body: Record<string, string>) {
+async function postBridge(path: string, body: Record<string, string | number>) {
   const base = piBridgeBase();
   const token = getPiAccessToken();
   if (!token) {
@@ -355,9 +355,9 @@ async function postBridge(path: string, body: Record<string, string>) {
     body: JSON.stringify(body),
   });
   const text = await res.text();
-  let data: { error?: string } = {};
+  let data: { error?: string; amountPi?: number; orderToken?: string; memo?: string } = {};
   try {
-    data = text ? (JSON.parse(text) as { error?: string }) : {};
+    data = text ? (JSON.parse(text) as typeof data) : {};
   } catch {
     /* non-JSON */
   }
@@ -365,6 +365,29 @@ async function postBridge(path: string, body: Record<string, string>) {
     throw new Error(data.error || text.slice(0, 240) || `Pi bridge error (${res.status})`);
   }
   return data;
+}
+
+/** Ask the server to price and sign an order (amount comes from the server). */
+async function createServerOrder(opts: {
+  amountInr: number;
+  bookingId: string;
+  memo: string;
+}): Promise<{ orderToken: string; amountPi: number; memo: string }> {
+  const data = await postBridge("/api/orders", {
+    amountInr: opts.amountInr,
+    bookingId: opts.bookingId,
+    memo: opts.memo,
+  });
+  const orderToken = String(data.orderToken || "");
+  const amountPi = Number(data.amountPi);
+  if (!orderToken || !(amountPi > 0)) {
+    throw new Error("Server did not return a priced order. Try again after Sign in with Pi.");
+  }
+  return {
+    orderToken,
+    amountPi,
+    memo: String(data.memo || opts.memo).slice(0, 120),
+  };
 }
 
 function onIncompletePaymentFound(_payment: unknown) {
@@ -418,8 +441,7 @@ export async function payWithPi(opts: {
   memo: string;
   bookingId: string;
 }): Promise<PiPaymentResult> {
-  const amountPi = inrToPi(opts.amountInr);
-  if (amountPi <= 0) throw new Error("Invalid Pi amount.");
+  if (!(Number(opts.amountInr) > 0)) throw new Error("Invalid order amount.");
 
   if (!inPiBrowser()) {
     throw new Error("Open this app in Pi Browser to pay with Pi.");
@@ -441,6 +463,15 @@ export async function payWithPi(opts: {
     throw new Error("Pi authenticate did not return an access token. Retry Sign in with Pi.");
   }
 
+  // Server prices the order — client must not invent π amount for approval.
+  const order = await createServerOrder({
+    amountInr: opts.amountInr,
+    bookingId: opts.bookingId,
+    memo: opts.memo,
+  });
+  const amountPi = order.amountPi;
+  const orderToken = order.orderToken;
+
   return withTimeout(
     new Promise<PiPaymentResult>((resolve, reject) => {
       let settled = false;
@@ -455,17 +486,17 @@ export async function payWithPi(opts: {
         Pi.createPayment(
           {
             amount: amountPi,
-            memo: opts.memo.slice(0, 120),
-            metadata: { bookingId: opts.bookingId },
+            memo: order.memo,
+            metadata: { bookingId: opts.bookingId, orderToken },
           },
           {
             onReadyForServerApproval(paymentId) {
-              postBridge("/api/payments/approve", { paymentId }).catch((err: Error) =>
+              postBridge("/api/payments/approve", { paymentId, orderToken }).catch((err: Error) =>
                 finish(false, err instanceof Error ? err : new Error(String(err))),
               );
             },
             onReadyForServerCompletion(paymentId, txid) {
-              postBridge("/api/payments/complete", { paymentId, txid })
+              postBridge("/api/payments/complete", { paymentId, txid, orderToken })
                 .then(() =>
                   finish(true, {
                     mode: "pi",

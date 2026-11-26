@@ -9,12 +9,18 @@ export async function POST(request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const data = await approvePayment(body.paymentId, request.headers.get("authorization"));
+    const data = await approvePayment(
+      body.paymentId,
+      request.headers.get("authorization"),
+      body.orderToken,
+    );
     return Response.json({ ok: true, data });
   } catch (err) {
     const status = err?.status || 500;
     const safe =
-      status === 401 || status === 400 || status === 503 ? err.message : "Payment approval failed.";
+      status === 401 || status === 400 || status === 403 || status === 503
+        ? err.message
+        : "Payment approval failed.";
     return Response.json({ ok: false, error: safe }, { status });
   }
 }

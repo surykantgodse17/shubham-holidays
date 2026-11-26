@@ -1,5 +1,10 @@
 /** Lightweight abuse protection for public /api routes (no paid upstream). */
 
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 30;
 const MAX_KEYS = 5_000;
@@ -190,27 +195,61 @@ export function requireAppOriginWeb(request) {
   return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
 }
 
-/** Stricter payment rate limit (10/min/IP). */
+/**
+ * Payment rate limit: IP + Authorization fingerprint, persisted under /tmp so
+ * instances on one machine share counters. Order/amount auth is the primary control.
+ */
 const PAY_WINDOW_MS = 60_000;
-const PAY_MAX = 10;
-const payBuckets = new Map();
+const PAY_MAX = 8;
+const PAY_STORE = path.join(os.tmpdir(), "shubham-holidays-pay-rate.json");
+
+function authFingerprint(authorization) {
+  const raw = String(authorization || "").trim();
+  if (!raw) return "anon";
+  return crypto.createHash("sha256").update(raw).digest("hex").slice(0, 24);
+}
+
+function readPayStore() {
+  try {
+    const raw = fs.readFileSync(PAY_STORE, "utf8");
+    const data = JSON.parse(raw);
+    return data && typeof data === "object" ? data : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePayStore(data) {
+  try {
+    fs.writeFileSync(PAY_STORE, JSON.stringify(data), "utf8");
+  } catch {
+    /* best-effort on read-only fs */
+  }
+}
 
 function takePayToken(key) {
   const now = Date.now();
-  for (const [k, b] of payBuckets) {
-    if (now - b.start >= PAY_WINDOW_MS * 2) payBuckets.delete(k);
+  const store = readPayStore();
+  for (const k of Object.keys(store)) {
+    if (now - Number(store[k]?.start || 0) >= PAY_WINDOW_MS * 2) delete store[k];
   }
-  let bucket = payBuckets.get(key);
-  if (!bucket || now - bucket.start >= PAY_WINDOW_MS) {
+  let bucket = store[key];
+  if (!bucket || now - Number(bucket.start) >= PAY_WINDOW_MS) {
     bucket = { start: now, count: 0 };
-    payBuckets.set(key, bucket);
   }
-  bucket.count += 1;
+  bucket.count = Number(bucket.count || 0) + 1;
+  store[key] = bucket;
+  writePayStore(store);
   return bucket.count <= PAY_MAX;
 }
 
+function payLimitKey(ip, authorization) {
+  return `${ip}|${authFingerprint(authorization)}`;
+}
+
 export function paymentRateLimit(req, res, next) {
-  if (!takePayToken(clientKey(req))) {
+  const key = payLimitKey(clientKey(req), req.headers.authorization);
+  if (!takePayToken(key)) {
     res.status(429).json({ ok: false, error: "Too many payment requests. Try again shortly." });
     return;
   }
@@ -218,7 +257,11 @@ export function paymentRateLimit(req, res, next) {
 }
 
 export function paymentRateLimitWeb(request) {
-  if (takePayToken(clientKeyFromRequest(request))) return null;
+  const key = payLimitKey(
+    clientKeyFromRequest(request),
+    request.headers.get("authorization"),
+  );
+  if (takePayToken(key)) return null;
   return Response.json(
     { ok: false, error: "Too many payment requests. Try again shortly." },
     { status: 429 },
