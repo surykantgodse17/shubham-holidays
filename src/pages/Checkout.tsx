@@ -7,12 +7,12 @@ import { formatINR } from "../data/mock";
 import {
   connectPiForCheckout,
   formatPi,
+  formatPiUsdRate,
   inrToPi,
   inrToUsd,
   isPiSandbox,
   payWithPi,
   payWithSandboxDemo,
-  PI_USD_VALUE,
   type PiConnectionState,
 } from "../lib/pi";
 import {
@@ -194,7 +194,7 @@ export function Checkout() {
         <h1>Pay with Pi</h1>
         <p>
           Fares are shown in INR and charged in Pi at the demo rate{" "}
-          <strong>1 π = ${PI_USD_VALUE.toLocaleString("en-US")}</strong>
+          <strong>{formatPiUsdRate()}</strong>
           {sandbox ? " · Pi sandbox mode" : ""}.
         </p>
         <Steps

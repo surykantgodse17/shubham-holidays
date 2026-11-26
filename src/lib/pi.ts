@@ -1,5 +1,7 @@
-/** Demo rate from prior Shubham Holidays Pi booking: 1 Pi = US$314,159 */
+/** Canonical demo rate: 1 π = exactly 314159 USD */
 export const PI_USD_VALUE = 314159;
+/** Display string for the rate — always `$314159`, never locale-comma formatted */
+export const PI_USD_RATE_LABEL = `$${PI_USD_VALUE}`;
 /** Demo INR→USD conversion for displaying Pi amounts from INR catalog prices */
 export const DEMO_INR_PER_USD = 83;
 
@@ -76,6 +78,11 @@ export function inrToPi(inr: number): number {
 
 export function formatPi(amount: number): string {
   return `${amount.toFixed(7)} π`;
+}
+
+/** UI copy: `1 π = $314159` */
+export function formatPiUsdRate(): string {
+  return `1 π = ${PI_USD_RATE_LABEL}`;
 }
 
 export function inPiBrowser(): boolean {

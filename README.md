@@ -1,6 +1,6 @@
 # Shubham Holidays
 
-Brand-first travel booking: flights, hotels, curated packages/experiences, and **Pay with Pi**. Catalog prices are sample INR data. Pi amounts use the demo rate **1 π = US$314,159**. Outside Pi Browser (or without a payment bridge), checkout completes a labeled **Pi sandbox demo**. No Pi API secrets ship in the client.
+Brand-first travel booking: flights, hotels, curated packages/experiences, and **Pay with Pi**. Catalog prices are sample INR data. Pi amounts use the demo rate **1 π = $314159**. Outside Pi Browser (or without a payment bridge), checkout completes a labeled **Pi sandbox demo**. No Pi API secrets ship in the client.
 
 ## Run locally
 
