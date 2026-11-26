@@ -258,6 +258,123 @@ export const destinations = [
   },
 ];
 
+/** Domestic packages shown on the homepage (India). */
+export const domesticPackages = listings.filter((l) => l.type === "Package");
+
+export type InternationalPackage = {
+  id: string;
+  title: string;
+  place: string;
+  duration: string;
+  price: number;
+  image: string;
+  inclusions: string[];
+};
+
+export const internationalPackages: InternationalPackage[] = [
+  {
+    id: "intl-dubai",
+    title: "Dubai",
+    place: "United Arab Emirates",
+    duration: "4N / 5D",
+    price: 64999,
+    image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel",
+      "Breakfast",
+      "Visa",
+      "Burj Khalifa",
+      "Desert Safari",
+      "Dhow Cruise",
+      "Dubai City Tour",
+      "Airport Transfers",
+    ],
+  },
+  {
+    id: "intl-singapore",
+    title: "Singapore",
+    place: "Singapore",
+    duration: "4N / 5D",
+    price: 74999,
+    image: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel",
+      "Breakfast",
+      "Visa",
+      "Universal Studios",
+      "Marina Bay Sands",
+      "Sentosa Island",
+      "Night Safari",
+      "Airport Transfers",
+    ],
+  },
+  {
+    id: "intl-malaysia",
+    title: "Malaysia",
+    place: "Kuala Lumpur · Genting",
+    duration: "4N / 5D",
+    price: 54999,
+    image: "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel",
+      "Breakfast",
+      "Visa",
+      "Kuala Lumpur City Tour",
+      "Genting Highlands",
+      "Batu Caves",
+      "Sunway Lagoon",
+    ],
+  },
+  {
+    id: "intl-bali",
+    title: "Indonesia · Bali",
+    place: "Bali",
+    duration: "4N / 5D",
+    price: 69999,
+    image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel with Pool",
+      "Breakfast",
+      "Visa on Arrival",
+      "Kintamani Tour",
+      "Uluwatu Temple",
+      "Water Sports",
+      "Nusa Penida Day Trip",
+    ],
+  },
+  {
+    id: "intl-sg-my",
+    title: "Singapore + Malaysia Combo",
+    place: "Singapore · Malaysia",
+    duration: "6N / 7D",
+    price: 89999,
+    image: "https://images.unsplash.com/photo-1565967511849-76a60a69caff?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "Hotels in Both Countries",
+      "Breakfast",
+      "Visa",
+      "Universal Studios",
+      "Sentosa",
+      "Kuala Lumpur Tour",
+      "Genting Highlands",
+      "Cruise Transfer",
+    ],
+  },
+];
+
+/** WhatsApp booking link — set VITE_WHATSAPP_NUMBER (digits with country code) on Vercel. */
+export function whatsappBookUrl(packageTitle: string, duration: string, price: number): string {
+  const text = `Hi Shubham Holidays, I'd like to book: ${packageTitle} (${duration}) — ${formatINR(price)} per person.`;
+  const phone = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+  const q = encodeURIComponent(text);
+  return phone ? `https://wa.me/${phone}?text=${q}` : `https://wa.me/?text=${q}`;
+}
+
 export function cityName(code: string): string {
   return cities.find((c) => c.code === code)?.name ?? code;
 }

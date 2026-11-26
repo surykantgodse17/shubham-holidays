@@ -2,7 +2,15 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BrandLogo } from "../components/BrandLogo";
-import { cities, destinations } from "../data/mock";
+import { PiGcvPrice } from "../components/PiGcvPrice";
+import {
+  cities,
+  destinations,
+  domesticPackages,
+  formatINR,
+  internationalPackages,
+  whatsappBookUrl,
+} from "../data/mock";
 
 type Tab = "flights" | "hotels" | "explore";
 
@@ -190,6 +198,79 @@ export function Home() {
                 <p>{d.blurb}</p>
               </div>
             </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="section shell" aria-labelledby="domestic-packages-heading">
+        <div className="section-head">
+          <span className="eyebrow">India</span>
+          <h2 id="domestic-packages-heading">Domestic Packages</h2>
+          <p>Curated journeys across India — same calm booking flow from browse to confirm.</p>
+        </div>
+        <div className="listing-grid">
+          {domesticPackages.map((pkg) => (
+            <Link key={pkg.id} to={`/explore/${pkg.id}`} className="listing-card">
+              <img src={pkg.image} alt="" loading="lazy" />
+              <div className="listing-body">
+                <span className="listing-tag">Domestic</span>
+                <h3>{pkg.title}</h3>
+                <p className="ink-soft text-092">
+                  {pkg.place} · {pkg.duration}
+                </p>
+                <div className="listing-footer">
+                  <div className="listing-price-block">
+                    <strong className="listing-price-label">{formatINR(pkg.price)}</strong>
+                    <PiGcvPrice inr={pkg.price} />
+                  </div>
+                  <span className="btn-text">View →</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="section shell" aria-labelledby="international-packages-heading">
+        <div className="section-head">
+          <span className="eyebrow">Abroad</span>
+          <h2 id="international-packages-heading">International Tour Packages</h2>
+          <p>Handpicked getaways with flights, hotels, visas, and sightseeing — book on WhatsApp.</p>
+        </div>
+        <div className="listing-grid">
+          {internationalPackages.map((pkg) => (
+            <article key={pkg.id} className="listing-card">
+              <img src={pkg.image} alt="" loading="lazy" />
+              <div className="listing-body">
+                <span className="listing-tag listing-tag-intl">International</span>
+                <h3>{pkg.title}</h3>
+                <p className="ink-soft text-092">
+                  {pkg.place} · {pkg.duration}
+                </p>
+                <ul className="package-inclusions">
+                  {pkg.inclusions.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <div className="listing-footer listing-footer-stack">
+                  <div className="listing-price-block">
+                    <strong className="listing-price-label">
+                      {formatINR(pkg.price)}
+                      <span className="price-pp"> /- per person</span>
+                    </strong>
+                    <PiGcvPrice inr={pkg.price} />
+                  </div>
+                  <a
+                    className="btn btn-sea btn-whatsapp"
+                    href={whatsappBookUrl(pkg.title, pkg.duration, pkg.price)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Book Now
+                  </a>
+                </div>
+              </div>
+            </article>
           ))}
         </div>
       </section>
