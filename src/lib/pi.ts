@@ -53,8 +53,9 @@ declare global {
 }
 
 const PI_AUTH_SCOPES = ["username", "payments", "wallet_address"];
-const LOAD_TIMEOUT_MS = 12_000;
-const INIT_TIMEOUT_MS = 8_000;
+const LOAD_TIMEOUT_MS = 8_000;
+const INIT_TIMEOUT_MS = 4_000;
+const CONNECT_BUDGET_MS = 5_000;
 const AUTH_TIMEOUT_MS = 45_000;
 const PAY_TIMEOUT_MS = 120_000;
 
@@ -85,10 +86,28 @@ export function formatPiUsdRate(): string {
   return `1 π = ${PI_USD_RATE_LABEL}`;
 }
 
+/**
+ * Strict Pi Browser detection — UA only.
+ * Do not treat `window.piNetwork` / other hosts as Pi Browser; that false-positive
+ * path called Pi.init() and left users stuck on “Connecting to Pi SDK”.
+ */
 export function inPiBrowser(): boolean {
   if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  return /PiBrowser/i.test(ua) || Boolean((window as { piNetwork?: unknown }).piNetwork);
+  return /PiBrowser/i.test(navigator.userAgent || "");
+}
+
+/** Sync initial checkout state so non–Pi Browser never paints “Connecting…”. */
+export function initialPiConnectionState(): PiConnectionState {
+  if (typeof window === "undefined") return { status: "idle" };
+  if (!inPiBrowser()) {
+    return {
+      status: "sandbox-fallback",
+      reason:
+        "Not in Pi Browser. Pay with Pi needs Pi Browser; use the sandbox demo here, or open this app in Pi Browser.",
+      sandbox: isPiSandbox(),
+    };
+  }
+  return { status: "connecting", detail: "Loading Pi SDK…" };
 }
 
 export function isPiSdkAvailable(): boolean {
@@ -215,68 +234,77 @@ export async function initPiSdkInBrowser(): Promise<void> {
   );
 }
 
-/**
- * Resolve checkout connection state without hanging.
- * Outside Pi Browser we never call Pi.init — go straight to sandbox-fallback.
- */
-export async function connectPiForCheckout(
+async function connectPiInBrowser(
   onProgress?: (state: PiConnectionState) => void,
 ): Promise<PiConnectionState> {
   const sandbox = isPiSandbox();
   const hasBridge = Boolean(piBridgeBase());
 
-  if (!inPiBrowser()) {
-    const state: PiConnectionState = {
-      status: "sandbox-fallback",
-      reason:
-        "Not in Pi Browser. Pay with Pi needs Pi Browser; use the sandbox demo here, or open this app in Pi Browser.",
-      sandbox,
-    };
-    onProgress?.(state);
-    return state;
-  }
-
   onProgress?.({ status: "connecting", detail: "Loading Pi SDK…" });
   try {
     await loadPiSdkScript();
   } catch (err) {
-    const state: PiConnectionState = {
+    return {
       status: "error",
       message: err instanceof Error ? err.message : "Failed to load Pi SDK.",
     };
-    onProgress?.(state);
-    return state;
   }
 
   onProgress?.({ status: "connecting", detail: "Initializing Pi SDK…" });
   try {
     await initPiSdkInBrowser();
   } catch (err) {
-    const state: PiConnectionState = {
+    return {
       status: "error",
       message: err instanceof Error ? err.message : "Failed to initialize Pi SDK.",
     };
-    onProgress?.(state);
-    return state;
   }
 
   if (!isPiSdkAvailable()) {
-    const state: PiConnectionState = {
+    return {
       status: "error",
       message: "Pi SDK initialized but payment APIs are unavailable.",
     };
-    onProgress?.(state);
-    return state;
   }
 
-  const state: PiConnectionState = {
+  return {
     status: "ready",
     inPiBrowser: true,
     sandbox,
     hasBridge,
   };
-  onProgress?.(state);
-  return state;
+}
+
+/**
+ * Resolve checkout connection state without hanging.
+ * Outside Pi Browser we never load/init the SDK — sandbox-fallback immediately.
+ * Inside Pi Browser, hard budget so “Connecting…” cannot stick forever.
+ */
+export async function connectPiForCheckout(
+  onProgress?: (state: PiConnectionState) => void,
+): Promise<PiConnectionState> {
+  if (!inPiBrowser()) {
+    const state = initialPiConnectionState();
+    onProgress?.(state);
+    return state;
+  }
+
+  try {
+    const state = await withTimeout(
+      connectPiInBrowser(onProgress),
+      CONNECT_BUDGET_MS,
+      "Timed out connecting to Pi SDK. Retry in Pi Browser, or use a normal browser for the sandbox demo.",
+    );
+    onProgress?.(state);
+    return state;
+  } catch (err) {
+    const state: PiConnectionState = {
+      status: "error",
+      message: err instanceof Error ? err.message : "Failed to connect to Pi SDK.",
+    };
+    onProgress?.(state);
+    return state;
+  }
 }
 
 async function postBridge(path: string, body: Record<string, string>) {

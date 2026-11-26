@@ -8,6 +8,7 @@ import {
   connectPiForCheckout,
   formatPi,
   formatPiUsdRate,
+  initialPiConnectionState,
   inrToPi,
   inrToUsd,
   isPiSandbox,
@@ -26,7 +27,7 @@ import {
 function statusLabel(state: PiConnectionState): string {
   switch (state.status) {
     case "idle":
-      return "Idle";
+      return "Preparing";
     case "connecting":
       return "Connecting";
     case "ready":
@@ -57,15 +58,18 @@ function statusDetail(state: PiConnectionState): string {
 
 export function Checkout() {
   const navigate = useNavigate();
-  const [cart, setCartState] = useState<CartItem | null>(null);
+  const [cart, setCartState] = useState<CartItem | null>(() =>
+    typeof window !== "undefined" ? getCart() : null,
+  );
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [conn, setConn] = useState<PiConnectionState>({ status: "idle" });
+  const [conn, setConn] = useState<PiConnectionState>(() => initialPiConnectionState());
 
   useEffect(() => {
     setCartState(getCart());
     let cancelled = false;
     (async () => {
+      // Non–Pi Browser already has sandbox-fallback from initial state — still refresh.
       const next = await connectPiForCheckout((partial) => {
         if (!cancelled) setConn(partial);
       });
@@ -82,7 +86,7 @@ export function Checkout() {
 
   const canPayWithPi = conn.status === "ready" && conn.hasBridge;
   const canSandboxDemo = conn.status === "sandbox-fallback" || conn.status === "error";
-  const connecting = conn.status === "connecting" || conn.status === "idle";
+  const isConnecting = conn.status === "connecting";
 
   if (!cart) {
     return (
@@ -181,6 +185,9 @@ export function Checkout() {
 
   async function onRetryConnect() {
     setError("");
+    const seed = initialPiConnectionState();
+    setConn(seed);
+    if (seed.status === "sandbox-fallback") return;
     setConn({ status: "connecting", detail: "Retrying…" });
     const next = await connectPiForCheckout(setConn);
     setConn(next);
@@ -224,9 +231,9 @@ export function Checkout() {
               )}
             </div>
             <p>{statusDetail(conn)}</p>
-            {(conn.status === "error" || connecting) && (
-              <button type="button" className="btn btn-text" onClick={onRetryConnect} disabled={connecting && conn.status === "connecting"}>
-                {connecting ? "Connecting…" : "Retry connection"}
+            {(conn.status === "error" || isConnecting) && (
+              <button type="button" className="btn btn-text" onClick={onRetryConnect} disabled={isConnecting}>
+                {isConnecting ? "Still connecting…" : "Retry connection"}
               </button>
             )}
           </div>
@@ -240,12 +247,12 @@ export function Checkout() {
             type="submit"
             className="btn btn-primary btn-pi"
             style={{ marginTop: "1.15rem", width: "100%" }}
-            disabled={processing || connecting || !canPayWithPi}
+            disabled={processing || isConnecting || !canPayWithPi}
           >
             {processing && canPayWithPi
               ? "Waiting for Pi…"
-              : connecting
-                ? "Connecting to Pi SDK…"
+              : isConnecting
+                ? "Checking Pi Browser…"
                 : canPayWithPi
                   ? `Pay ${formatPi(amountPi)} with Pi`
                   : "Pay with Pi (needs Pi Browser + bridge)"}
