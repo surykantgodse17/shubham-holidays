@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="footer">
       <div className="shell footer-inner">
         <div className="footer-brand">
-          <BrandLogo size="sm" withWordmark />
+          <BrandLogo size="md" withWordmark />
           <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
         </div>
         <div className="footer-links">
