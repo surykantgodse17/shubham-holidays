@@ -12,7 +12,6 @@ import {
   initialPiConnectionState,
   inrToPi,
   inrToUsd,
-  isPiSandbox,
   payWithPi,
   payWithSandboxDemo,
   type PiConnectionState,
@@ -48,8 +47,8 @@ function statusDetail(state: PiConnectionState): string {
       return state.detail;
     case "ready":
       return state.hasBridge
-        ? `Pi Browser ready${state.sandbox ? " (sandbox)" : " (mainnet)"}. You can pay with Pi.`
-        : `Pi Browser + SDK ready${state.sandbox ? " (sandbox)" : " (mainnet)"}, but the payment bridge did not respond.`;
+        ? "Pi Sandbox ready (Testnet / Test Pi). You can pay with Test Pi."
+        : "Pi Sandbox + SDK ready (Testnet), but the payment bridge did not respond.";
     case "sandbox-fallback":
       return state.reason;
     case "error":
@@ -83,7 +82,6 @@ export function Checkout() {
 
   const amountPi = useMemo(() => (cart ? inrToPi(cart.amount) : 0), [cart]);
   const amountUsd = useMemo(() => (cart ? inrToUsd(cart.amount) : 0), [cart]);
-  const sandbox = isPiSandbox();
 
   const canPayWithPi = conn.status === "ready" && conn.hasBridge;
   const canSandboxDemo = conn.status === "sandbox-fallback" || conn.status === "error";
@@ -140,7 +138,7 @@ export function Checkout() {
     e.preventDefault();
     setError("");
     if (!canPayWithPi) {
-      setError("Pi is not ready for live payment yet. Wait for Ready, or open in Pi Browser with a payment bridge.");
+      setError("Test Pi is not ready yet. Wait for Ready, or open this app in the Pi Sandbox.");
       return;
     }
     setProcessing(true);
@@ -155,14 +153,13 @@ export function Checkout() {
         memo,
         bookingId,
       });
-      await finishBooking(
-        bookingId,
-        `Pi Network${sandbox ? " (sandbox)" : ""}`,
-        result.amountPi,
-        { status: "confirmed", paymentId: result.paymentId, txid: result.txid },
-      );
+      await finishBooking(bookingId, "Test Pi (Sandbox / Testnet)", result.amountPi, {
+        status: "confirmed",
+        paymentId: result.paymentId,
+        txid: result.txid,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Pi payment failed.");
+      setError(err instanceof Error ? err.message : "Test Pi payment failed.");
     } finally {
       setProcessing(false);
     }
@@ -203,12 +200,11 @@ export function Checkout() {
       <div className="shell page-hero checkout-hero">
         <BrandLogo size="lg" />
         <span className="eyebrow">Checkout</span>
-        <h1>Pay with Pi</h1>
+        <h1>Pay with Test Pi</h1>
         <p>
-          Fares are shown in INR; Pi is charged at GCV{" "}
+          Staging / Testnet only. Fares are in INR; Test Pi is charged at GCV{" "}
           <strong>{formatPiUsdRate()}</strong>
-          {" "}(USD ÷ 314159; not market price)
-          {sandbox ? " · Pi sandbox mode" : ""}.
+          {" "}(catalog USD ÷ 314159; not market price).
         </p>
         <Steps
           items={[
@@ -222,7 +218,7 @@ export function Checkout() {
 
       <div className="shell book-layout">
         <form className="panel" onSubmit={onPayPi}>
-          <h2>Pi Network payment</h2>
+          <h2>Test Pi payment (Sandbox)</h2>
 
           <div className={`pi-status pi-status-${conn.status}`} role="status" aria-live="polite">
             <div className="pi-status-row">
@@ -230,7 +226,7 @@ export function Checkout() {
                 {statusLabel(conn)}
               </span>
               {conn.status === "ready" && (
-                <span className="badge badge-sample">{conn.sandbox ? "Sandbox" : "Mainnet"}</span>
+                <span className="badge badge-sample">Testnet · Test Pi</span>
               )}
               {conn.status === "sandbox-fallback" && (
                 <span className="badge badge-sample">Not a real payment</span>
@@ -266,7 +262,7 @@ export function Checkout() {
                 }
               }}
             >
-              {piUser ? `Signed in as @${piUser}` : "Sign in with Pi"}
+              {piUser ? `Signed in as @${piUser}` : "Sign in with Pi (Testnet)"}
             </button>
           )}
 
@@ -276,12 +272,12 @@ export function Checkout() {
             disabled={processing || isConnecting || !canPayWithPi}
           >
             {processing && canPayWithPi
-              ? "Waiting for Pi…"
+              ? "Waiting for Test Pi…"
               : isConnecting
-                ? "Checking Pi Browser…"
+                ? "Checking Pi Sandbox…"
                 : canPayWithPi
-                  ? `Pay ${formatPi(amountPi)} with Pi`
-                  : "Pay with Pi (needs Pi Browser)"}
+                  ? `Pay with Test Pi (${formatPi(amountPi)})`
+                  : "Pay with Test Pi (open in Sandbox)"}
           </button>
 
           {canSandboxDemo && (
