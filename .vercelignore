@@ -1,8 +1,0 @@
-.tools
-node_modules
-data
-.env
-.env.local
-.vercel
-.git
-*.log
