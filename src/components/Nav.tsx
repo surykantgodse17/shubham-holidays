@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { BrandLogo } from "./BrandLogo";
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,8 +19,15 @@ export function Nav() {
   return (
     <header className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="nav-inner">
-        <Link to="/" className="brand" onClick={() => setOpen(false)}>
-          <BrandLogo size="sm" withWordmark />
+        <Link to="/" className="brand" onClick={() => setOpen(false)} aria-label="Shubham Holidays">
+          <img
+            src="/logo-full.png"
+            alt="Shubham Holidays"
+            className="nav-logo"
+            width={168}
+            height={48}
+            decoding="async"
+          />
         </Link>
 
         <button
