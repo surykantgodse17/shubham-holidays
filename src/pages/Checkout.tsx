@@ -5,6 +5,7 @@ import { BrandLogo } from "../components/BrandLogo";
 import { Steps } from "../components/Steps";
 import { formatINR } from "../data/mock";
 import {
+  authenticatePi,
   connectPiForCheckout,
   formatPi,
   formatPiUsdRate,
@@ -47,8 +48,8 @@ function statusDetail(state: PiConnectionState): string {
       return state.detail;
     case "ready":
       return state.hasBridge
-        ? `Pi Browser ready${state.sandbox ? " (sandbox)" : ""}. You can pay with Pi.`
-        : `Pi Browser + SDK ready${state.sandbox ? " (sandbox)" : ""}, but no payment bridge is configured — real Pay with Pi needs VITE_PI_BRIDGE_URL. Use sandbox demo only in a normal browser.`;
+        ? `Pi Browser ready${state.sandbox ? " (sandbox)" : " (mainnet)"}. You can pay with Pi.`
+        : `Pi Browser + SDK ready${state.sandbox ? " (sandbox)" : " (mainnet)"}, but the payment bridge did not respond.`;
     case "sandbox-fallback":
       return state.reason;
     case "error":
@@ -63,6 +64,7 @@ export function Checkout() {
   );
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [piUser, setPiUser] = useState<string>("");
   const [conn, setConn] = useState<PiConnectionState>(() => initialPiConnectionState());
 
   useEffect(() => {
@@ -240,8 +242,30 @@ export function Checkout() {
 
           {error && <p className="error-text">{error}</p>}
           <p className="pay-note">
-            No Pi API secrets are in this client. Live Pi payments need Pi Browser plus a server bridge for approve/complete.
+            No Pi API secrets ship in this client. Approve/complete runs on same-origin{" "}
+            <code>/api/payments/*</code> with <code>PI_NETWORK_API_KEY</code> on the server. Rate:{" "}
+            <strong>{formatPiUsdRate()}</strong>.
           </p>
+
+          {conn.status === "ready" && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ marginTop: "0.85rem", width: "100%" }}
+              disabled={processing}
+              onClick={async () => {
+                setError("");
+                try {
+                  const session = await authenticatePi(["username", "payments", "wallet_address"]);
+                  setPiUser(session.username || "Pi user");
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Pi sign-in failed.");
+                }
+              }}
+            >
+              {piUser ? `Signed in as @${piUser}` : "Sign in with Pi"}
+            </button>
+          )}
 
           <button
             type="submit"
@@ -255,7 +279,7 @@ export function Checkout() {
                 ? "Checking Pi Browser…"
                 : canPayWithPi
                   ? `Pay ${formatPi(amountPi)} with Pi`
-                  : "Pay with Pi (needs Pi Browser + bridge)"}
+                  : "Pay with Pi (needs Pi Browser)"}
           </button>
 
           {canSandboxDemo && (
@@ -268,12 +292,6 @@ export function Checkout() {
             >
               {processing ? "Completing demo…" : `Complete with sandbox demo (${formatPi(amountPi)})`}
             </button>
-          )}
-
-          {conn.status === "ready" && !conn.hasBridge && (
-            <p className="pay-note" style={{ marginTop: "0.85rem" }}>
-              SDK is connected in Pi Browser. Configure <code>VITE_PI_BRIDGE_URL</code> to enable live Pay with Pi; until then use a normal browser for the sandbox demo button.
-            </p>
           )}
         </form>
 

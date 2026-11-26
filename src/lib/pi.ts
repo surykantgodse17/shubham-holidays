@@ -116,16 +116,36 @@ export function isPiSdkAvailable(): boolean {
   return typeof window !== "undefined" && Boolean(window.Pi?.createPayment && window.Pi?.init);
 }
 
-/** Sandbox by default; set VITE_PI_SANDBOX=false only when intentionally using mainnet. */
+/**
+ * Pi network mode for SDK init.
+ * Production (Mainnet) is the registered network for this app.
+ * Override with VITE_PI_SANDBOX=true only for local/dev experiments.
+ * Localhost defaults to sandbox so local Express can still be embedded in Pi Sandbox for smoke tests;
+ * the public host defaults to mainnet.
+ */
 export function isPiSandbox(): boolean {
   const raw = import.meta.env.VITE_PI_SANDBOX;
-  if (raw === undefined || raw === "") return true;
-  return String(raw).toLowerCase() !== "false";
+  if (raw !== undefined && raw !== "") {
+    return String(raw).toLowerCase() !== "false";
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return true;
+  }
+  return false;
 }
 
-/** Optional public bridge URL for approve/complete (no secrets in the client). */
+/**
+ * Optional absolute bridge URL for approve/complete (no secrets in the client).
+ * Empty = same-origin `/api/payments/*` (local Express or published api handlers).
+ */
 export function piBridgeBase(): string {
   return String(import.meta.env.VITE_PI_BRIDGE_URL || "").replace(/\/$/, "");
+}
+
+/** True when payments can call a bridge (same-origin by default). */
+export function hasPaymentBridge(): boolean {
+  return true;
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
@@ -240,7 +260,7 @@ async function connectPiInBrowser(
   onProgress?: (state: PiConnectionState) => void,
 ): Promise<PiConnectionState> {
   const sandbox = isPiSandbox();
-  const hasBridge = Boolean(piBridgeBase());
+  const hasBridge = hasPaymentBridge();
 
   onProgress?.({ status: "connecting", detail: "Loading Pi SDK…" });
   try {
@@ -311,25 +331,51 @@ export async function connectPiForCheckout(
 
 async function postBridge(path: string, body: Record<string, string>) {
   const base = piBridgeBase();
-  if (!base) {
-    throw new Error(
-      "Pi payment needs a server bridge for approve/complete. Set VITE_PI_BRIDGE_URL, or use sandbox demo outside Pi Browser.",
-    );
-  }
   const res = await fetch(`${base}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Pi bridge error (${res.status})`);
+  const text = await res.text();
+  let data: { error?: string } = {};
+  try {
+    data = text ? (JSON.parse(text) as { error?: string }) : {};
+  } catch {
+    /* non-JSON */
   }
-  return res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || text.slice(0, 240) || `Pi bridge error (${res.status})`);
+  }
+  return data;
 }
 
 function onIncompletePaymentFound(_payment: unknown) {
   // Left for the next authenticate / bridge cycle.
+}
+
+export type PiUserSession = {
+  username?: string;
+  accessToken?: string;
+};
+
+/** Pi Login (authenticate). Prefer Pi Browser (Production / Mainnet). */
+export async function authenticatePi(
+  scopes: string[] = ["username", "payments", "wallet_address"],
+): Promise<PiUserSession> {
+  await initPiSdkInBrowser();
+  const Pi = window.Pi;
+  if (!Pi?.authenticate) {
+    throw new Error("Pi SDK authenticate is unavailable. Open this app in Pi Browser.");
+  }
+  const auth = await withTimeout(
+    Pi.authenticate(scopes, onIncompletePaymentFound),
+    AUTH_TIMEOUT_MS,
+    "Timed out waiting for Pi authentication. Approve the prompt and retry.",
+  );
+  return {
+    username: auth?.user?.username,
+    accessToken: auth?.accessToken,
+  };
 }
 
 /** Explicit sandbox demo — only for outside Pi Browser (or when user opts in). */
@@ -364,13 +410,6 @@ export async function payWithPi(opts: {
   const Pi = window.Pi;
   if (!Pi?.createPayment || !Pi.authenticate) {
     throw new Error("Pi SDK is not ready. Wait for Ready, then try again.");
-  }
-
-  const bridge = piBridgeBase();
-  if (!bridge) {
-    throw new Error(
-      "Pi Browser payments need a payment bridge (VITE_PI_BRIDGE_URL) for approve/complete. API keys stay on the server.",
-    );
   }
 
   await withTimeout(

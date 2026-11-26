@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/flights", "destination": "/api/flights" },
+    { "source": "/api/hotels", "destination": "/api/hotels" },
+    { "source": "/api/payments/approve", "destination": "/api/payments/approve" },
+    { "source": "/api/payments/complete", "destination": "/api/payments/complete" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://sdk.minepi.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://sandbox-api.minepi.com https://socialchain.app https://*.minepi.com; frame-src https://sdk.minepi.com https://app-cdn.minepi.com https://*.minepi.com; frame-ancestors 'self' https://*.pinet.com https://*.minepi.com; worker-src 'self' blob:"
+        }
+      ]
+    }
+  ]
+}

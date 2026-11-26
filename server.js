@@ -2,7 +2,13 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { searchFlights, searchHotels, normalizeAirport } from "./server/travel.js";
-import { rateLimit, sameAppOrigin, safeApiError } from "./server/security.js";
+import { approvePayment, completePayment, paymentsReady } from "./server/payments.js";
+import {
+  rateLimit,
+  sameAppOrigin,
+  safeApiError,
+  PI_SANDBOX_CSP,
+} from "./server/security.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 5173);
@@ -12,12 +18,21 @@ async function createApp() {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
+  app.use(express.json({ limit: "64kb" }));
+
+  // Pi Sandbox embed: no X-Frame-Options; allow pinet/minepi ancestors.
+  app.use((_req, res, next) => {
+    res.removeHeader("X-Frame-Options");
+    res.setHeader("Content-Security-Policy", PI_SANDBOX_CSP);
+    next();
+  });
 
   app.get("/api/health", (_req, res) => {
     res.json({
       ok: true,
       searchMode: "sample",
       piRate: "1 Pi = $314159",
+      payments: paymentsReady(),
     });
   });
 
@@ -49,6 +64,32 @@ async function createApp() {
     }
   });
 
+  app.post("/api/payments/approve", ...protect, async (req, res) => {
+    try {
+      const data = await approvePayment(req.body?.paymentId);
+      res.json({ ok: true, data });
+    } catch (err) {
+      const status = err?.status || 500;
+      res.status(status).json({
+        ok: false,
+        error: status >= 500 && status !== 503 ? "Payment approval failed." : err.message,
+      });
+    }
+  });
+
+  app.post("/api/payments/complete", ...protect, async (req, res) => {
+    try {
+      const data = await completePayment(req.body?.paymentId, req.body?.txid);
+      res.json({ ok: true, data });
+    } catch (err) {
+      const status = err?.status || 500;
+      res.status(status).json({
+        ok: false,
+        error: status >= 500 && status !== 503 ? "Payment completion failed." : err.message,
+      });
+    }
+  });
+
   if (!isProd) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
@@ -69,6 +110,14 @@ async function createApp() {
 }
 
 const app = await createApp();
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Shubham Holidays listening on http://127.0.0.1:${PORT}`);
-});
+
+const isDirectRun =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectRun) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Shubham Holidays listening on http://127.0.0.1:${PORT}`);
+  });
+}
+
+export default app;
