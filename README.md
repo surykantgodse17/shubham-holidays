@@ -1,30 +1,32 @@
-# Shubham Holidays
+# React + TypeScript + Vite
 
-Flight and hotel booking for Pi Network. Fares are set in US dollars and charged in Pi at **1 Pi = $314,159**.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-Cancelling a confirmed Pi payment keeps a 10% charge and refunds the remaining Pi to the same traveler.
+Currently, two official plugins are available:
 
-## Run locally
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-```bash
-npm install
-npm start
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the Oxlint configuration
+
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
 ```
 
-Open `http://localhost:3000`. The Pi redirect URI for local sign-in is `http://localhost:3000`.
-
-Copy `.env.example` to `.env` and set:
-
-- `PI_CLIENT_ID` — public OAuth client id from Pi Developers
-- `PI_REDIRECT_URI` — must match the registered redirect URI exactly
-- `PI_SANDBOX` — `true` for Testnet, `false` for Mainnet
-- `PI_NETWORK_API_KEY` — server API key from Pi Developers → Settings. `PI_API_KEY` is still accepted. Keep it only on the server.
-- `PI_WALLET_SEED` — app wallet private seed from wallet setup. Required for refunds. Keep it only on the server.
-
-Pay with Pi from Pi Browser. The server approves and completes the payment before a PNR is issued. Sign in again after this update so Pi can grant the `wallet_address` scope used for refunds.
-
-## Deploy
-
-Set the same environment variables on the host and point `PI_REDIRECT_URI` at the public `https://` origin registered for the app. `npm start` listens on `PORT` (default 3000). A `Dockerfile` and `Procfile` are included.
-
-Do not commit `.env` or `data/store.json`.
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
