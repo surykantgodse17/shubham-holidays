@@ -9,7 +9,7 @@
     { "source": "/api/orders", "destination": "/api/orders" },
     { "source": "/api/payments/approve", "destination": "/api/payments/approve" },
     { "source": "/api/payments/complete", "destination": "/api/payments/complete" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|validation-key\\.txt$).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
