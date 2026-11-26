@@ -90,7 +90,7 @@ export function FlightBook() {
             </div>
           </div>
           {error && <p className="error-text">{error}</p>}
-          <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div className="btn-row mt-125">
             <button type="submit" className="btn btn-primary">
               Continue to payment
             </button>

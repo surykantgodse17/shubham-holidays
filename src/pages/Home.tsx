@@ -43,7 +43,7 @@ export function Home() {
             <Link to="/flights" className="btn btn-primary">
               Search flights
             </Link>
-            <Link to="/explore" className="btn btn-ghost" style={{ color: "#14261f", background: "rgba(255,255,255,0.88)" }}>
+            <Link to="/explore" className="btn btn-ghost hero-ghost-on-photo">
               Browse experiences
             </Link>
           </div>
@@ -157,7 +157,7 @@ export function Home() {
           )}
 
           {tab === "explore" && (
-            <div className="search-grid" style={{ gridTemplateColumns: "1fr auto" }}>
+            <div className="search-grid search-grid-compact">
               <div className="field">
                 <label htmlFor="q">What are you looking for?</label>
                 <input id="q" placeholder="Packages, treks, food walks…" readOnly value="Curated India & nearby" />

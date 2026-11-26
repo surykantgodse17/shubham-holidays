@@ -33,7 +33,7 @@ export function Hotels() {
         />
       </div>
 
-      <div className="shell" style={{ marginTop: "1.25rem" }}>
+      <div className="shell mt-125">
         <form className="search-panel" onSubmit={onSubmit}>
           <div className="search-grid">
             <div className="field">

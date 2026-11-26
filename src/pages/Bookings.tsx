@@ -20,7 +20,7 @@ export function Bookings() {
       <div className="shell page-hero">
         <span className="eyebrow">Account</span>
         <h1>My bookings</h1>
-        <p>Confirmed demo bookings stored locally in this browser.</p>
+        <p>Bookings stored locally in this browser. Demo entries are not real reservations.</p>
       </div>
 
       <div className="shell">
@@ -28,7 +28,7 @@ export function Bookings() {
           {bookings.length === 0 ? (
             <div className="empty">
               <p>No bookings yet. Search a flight, hotel, or experience to get started.</p>
-              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap", marginTop: "1rem" }}>
+              <div className="btn-row btn-row-center mt-1">
                 <Link to="/flights" className="btn btn-sea">
                   Flights
                 </Link>
@@ -45,26 +45,28 @@ export function Bookings() {
               {bookings.map((b: BookingRecord) => (
                 <div key={b.bookingId} className="booking-item">
                   <div>
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                      <strong style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem" }}>{b.title}</strong>
-                      <span className="badge">{b.status}</span>
+                    <div className="btn-row btn-row-gap-sm">
+                      <strong className="booking-title">{b.title}</strong>
+                      <span className={`badge ${b.status === "demo" ? "badge-sample" : "badge"}`}>
+                        {b.status === "demo" ? "demo (local)" : b.status}
+                      </span>
                       <span className="badge badge-sample">{b.kind}</span>
                     </div>
-                    <p style={{ color: "var(--ink-soft)", marginTop: "0.35rem" }}>{b.subtitle}</p>
-                    <p style={{ color: "var(--ink-muted)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
+                    <p className="ink-soft mt-035">{b.subtitle}</p>
+                    <p className="ink-muted text-085 mt-025">
                       {b.bookingId} · {b.guestName} · {new Date(b.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
                     </p>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "var(--sea-deep)", fontSize: "1.2rem" }}>
+                  <div className="text-right">
+                    <div className="booking-amount">
                       {formatINR(b.amount)}
                     </div>
-                    <div style={{ fontSize: "0.82rem", color: "var(--ink-muted)" }}>{b.paymentMethod}</div>
+                    <div className="booking-meta">{b.paymentMethod}</div>
                   </div>
                 </div>
               ))}
-              <button type="button" className="btn btn-ghost" style={{ marginTop: "1rem" }} onClick={clearAll}>
-                Clear demo bookings
+              <button type="button" className="btn btn-ghost mt-1" onClick={clearAll}>
+                Clear local bookings
               </button>
             </>
           )}

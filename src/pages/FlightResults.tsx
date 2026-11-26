@@ -73,7 +73,7 @@ export function FlightResults() {
           {date ? `Departing ${date}` : "Flexible date"} · {guests} traveler{guests === "1" ? "" : "s"} ·{" "}
           {formatPiUsdRate()}
         </p>
-        <p className="sample-banner" style={{ marginTop: "0.65rem" }}>
+        <p className="sample-banner mt-065">
           <span className={`badge ${source === "live" ? "badge" : "badge-sample"}`}>
             {source === "live" ? "Live" : source === "sample" ? "Sample data" : "Error"}
           </span>
@@ -124,16 +124,15 @@ export function FlightResults() {
             </div>
           ) : (
             <div className="result-list">
-              {results.map((f, i) => (
+              {results.map((f) => (
                 <article
                   key={f.id}
                   className={`result-card${selected === f.id ? " selected" : ""}`}
-                  style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <div className="result-main">
                     <h3>
                       {f.airline}{" "}
-                      <span style={{ fontWeight: 500, color: "var(--ink-muted)", fontSize: "0.9rem" }}>
+                      <span className="result-flight-no">
                         {f.flightNo}
                       </span>
                     </h3>
@@ -152,8 +151,7 @@ export function FlightResults() {
                     <PiGcvPrice inr={f.price} />
                     <button
                       type="button"
-                      className="btn btn-sea"
-                      style={{ marginTop: "0.55rem" }}
+                      className="btn btn-sea mt-055"
                       onClick={() => setSelected(f.id)}
                     >
                       {selected === f.id ? "Selected" : "Select"}
@@ -164,7 +162,7 @@ export function FlightResults() {
             </div>
           )}
 
-          <div style={{ marginTop: "1.25rem", display: "flex", justifyContent: "flex-end" }}>
+          <div className="btn-row btn-row-end mt-125">
             <button className="btn btn-primary" disabled={!selected} onClick={continueBook}>
               Continue to book
             </button>

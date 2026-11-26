@@ -47,7 +47,7 @@ export function ExploreDetail() {
   return (
     <div className="page">
       <div className="shell">
-        <Link to="/explore" className="btn-text" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+        <Link to="/explore" className="btn-text inline-block mt-125">
           ← All listings
         </Link>
 
@@ -55,7 +55,7 @@ export function ExploreDetail() {
           <img src={listing.image} alt="" />
           <div className="detail-hero-overlay">
             <span className="badge badge-amber">{listing.type}</span>
-            <h1 style={{ marginTop: "0.5rem" }}>{listing.title}</h1>
+            <h1 className="mt-05">{listing.title}</h1>
             <p>
               {listing.place} · {listing.duration}
             </p>
@@ -69,10 +69,10 @@ export function ExploreDetail() {
           </div>
         </div>
 
-        <div className="book-layout" style={{ marginTop: "1.5rem" }}>
+        <div className="book-layout mt-15">
           <div className="panel">
             <h2>About</h2>
-            <p style={{ color: "var(--ink-soft)", lineHeight: 1.65 }}>{listing.description}</p>
+            <p className="ink-soft line-1-65">{listing.description}</p>
             <p className="sample-banner">
               <span className="badge badge-sample">Sample listing</span>
               Partner and experience inventory is mocked for this demo.
@@ -83,12 +83,12 @@ export function ExploreDetail() {
             <h2>Book</h2>
             <div className="summary-row">
               <span>From</span>
-              <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "var(--sea-deep)" }}>
+              <span className="font-display-strong">
                 {formatINR(listing.price)}
               </span>
             </div>
             <PiGcvPrice inr={listing.price} className="pi-gcv-price pi-gcv-price--end" />
-            <div className="form-grid" style={{ marginTop: "1rem" }}>
+            <div className="form-grid mt-1">
               <div className="field">
                 <label htmlFor="date">Preferred date</label>
                 <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
@@ -112,7 +112,7 @@ export function ExploreDetail() {
                 <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" style={{ marginTop: "1.1rem", width: "100%" }}>
+            <button type="submit" className="btn btn-primary btn-block mt-11">
               Continue to payment
             </button>
           </form>

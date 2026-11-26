@@ -21,26 +21,43 @@ export function Confirmation() {
     );
   }
 
+  const isDemo = booking.status === "demo";
+
   return (
     <div className="page">
       <div className="shell confirm-wrap">
         <BrandLogo size="lg" />
         <div className="check" aria-hidden>
-          ✓
+          {isDemo ? "i" : "✓"}
         </div>
-        <h1>Booking confirmed</h1>
+        <h1>{isDemo ? "Local demo saved" : "Booking confirmed"}</h1>
         <p>
-          Reference <strong>{booking.bookingId}</strong> · saved in this browser · {formatPiUsdRate()}
+          {isDemo ? (
+            <>
+              Reference <strong>{booking.bookingId}</strong> · sample only in this browser · not a Pi payment or real reservation
+            </>
+          ) : (
+            <>
+              Reference <strong>{booking.bookingId}</strong> · saved in this browser · {formatPiUsdRate()}
+            </>
+          )}
         </p>
 
-        <div className="panel" style={{ textAlign: "left", maxWidth: 480, margin: "0 auto 1.5rem" }}>
+        {isDemo && (
+          <p className="sample-banner confirm-demo-banner">
+            <span className="badge badge-sample">Demo</span>
+            No Pi was charged and no supplier booking was created. Open in Pi Browser to pay for real.
+          </p>
+        )}
+
+        <div className="panel confirm-panel">
           <div className="summary-row">
             <span>Item</span>
             <span>{booking.title}</span>
           </div>
           <div className="summary-row">
             <span>Details</span>
-            <span style={{ textAlign: "right", maxWidth: "14rem" }}>{booking.subtitle}</span>
+            <span className="summary-value-wrap">{booking.subtitle}</span>
           </div>
           <div className="summary-row">
             <span>Guest</span>
@@ -51,18 +68,22 @@ export function Confirmation() {
             <span>{booking.paymentMethod}</span>
           </div>
           <div className="summary-row">
+            <span>Status</span>
+            <span>{isDemo ? "demo (local only)" : booking.status}</span>
+          </div>
+          <div className="summary-row">
             <span>Catalog (INR)</span>
             <span>{formatINR(booking.amount)}</span>
           </div>
           {booking.meta?.amountPi ? (
             <div className="summary-row">
-              <span>Paid in Pi</span>
+              <span>{isDemo ? "Demo Pi amount" : "Paid in Pi"}</span>
               <span>{formatPi(Number(booking.meta.amountPi))}</span>
             </div>
           ) : null}
         </div>
 
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
+        <div className="btn-row btn-row-center">
           <Link to="/bookings" className="btn btn-sea">
             My bookings
           </Link>

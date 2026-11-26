@@ -34,7 +34,7 @@ function statusLabel(state: PiConnectionState): string {
     case "ready":
       return "Ready";
     case "sandbox-fallback":
-      return "Sandbox fallback";
+      return "Local demo only";
     case "error":
       return "Error";
   }
@@ -71,7 +71,6 @@ export function Checkout() {
     setCartState(getCart());
     let cancelled = false;
     (async () => {
-      // Non–Pi Browser already has sandbox-fallback from initial state — still refresh.
       const next = await connectPiForCheckout((partial) => {
         if (!cancelled) setConn(partial);
       });
@@ -95,7 +94,7 @@ export function Checkout() {
       <div className="page shell empty">
         <BrandLogo size="lg" />
         <p>Your checkout is empty. Search a flight, hotel, or experience first.</p>
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
+        <div className="btn-row btn-row-center">
           <Link to="/flights" className="btn btn-sea">
             Flights
           </Link>
@@ -114,8 +113,7 @@ export function Checkout() {
     bookingId: string,
     paymentMethod: string,
     amountPiPaid: number,
-    paymentId?: string,
-    txid?: string,
+    opts: { status: "confirmed" | "demo"; paymentId?: string; txid?: string },
   ) {
     const guestName = cart!.meta?.guest || cart!.meta?.passenger || "Guest";
     const email = cart!.meta?.email || "guest@example.com";
@@ -126,12 +124,12 @@ export function Checkout() {
       guestName,
       email,
       paymentMethod,
-      status: "confirmed",
+      status: opts.status,
       meta: {
         ...cart!.meta,
         amountPi: String(amountPiPaid),
-        piPaymentId: paymentId || "",
-        piTxid: txid || "",
+        piPaymentId: opts.paymentId || "",
+        piTxid: opts.txid || "",
       },
     });
     clearCart();
@@ -161,8 +159,7 @@ export function Checkout() {
         bookingId,
         `Pi Network${sandbox ? " (sandbox)" : ""}`,
         result.amountPi,
-        result.paymentId,
-        result.txid,
+        { status: "confirmed", paymentId: result.paymentId, txid: result.txid },
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Pi payment failed.");
@@ -180,9 +177,12 @@ export function Checkout() {
         amountInr: cart!.amount,
         bookingId,
       });
-      await finishBooking(bookingId, "Pi (sandbox demo)", result.amountPi, result.paymentId);
+      await finishBooking(bookingId, "Local demo — not a Pi payment", result.amountPi, {
+        status: "demo",
+        paymentId: result.paymentId,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sandbox demo failed.");
+      setError(err instanceof Error ? err.message : "Local demo failed.");
     } finally {
       setProcessing(false);
     }
@@ -233,7 +233,7 @@ export function Checkout() {
                 <span className="badge badge-sample">{conn.sandbox ? "Sandbox" : "Mainnet"}</span>
               )}
               {conn.status === "sandbox-fallback" && (
-                <span className="badge badge-sample">Demo</span>
+                <span className="badge badge-sample">Not a real payment</span>
               )}
             </div>
             <p>{statusDetail(conn)}</p>
@@ -254,8 +254,7 @@ export function Checkout() {
           {conn.status === "ready" && (
             <button
               type="button"
-              className="btn btn-ghost"
-              style={{ marginTop: "0.85rem", width: "100%" }}
+              className="btn btn-ghost btn-block mt-085"
               disabled={processing}
               onClick={async () => {
                 setError("");
@@ -273,8 +272,7 @@ export function Checkout() {
 
           <button
             type="submit"
-            className="btn btn-primary btn-pi"
-            style={{ marginTop: "1.15rem", width: "100%" }}
+            className="btn btn-primary btn-pi btn-block mt-115"
             disabled={processing || isConnecting || !canPayWithPi}
           >
             {processing && canPayWithPi
@@ -287,15 +285,21 @@ export function Checkout() {
           </button>
 
           {canSandboxDemo && (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              style={{ marginTop: "0.75rem", width: "100%" }}
-              disabled={processing}
-              onClick={onSandboxDemo}
-            >
-              {processing ? "Completing demo…" : `Complete with sandbox demo (${formatPi(amountPi)})`}
-            </button>
+            <div className="demo-pay-block">
+              <p className="demo-pay-warning">
+                Local demo only: saves a sample booking in this browser. No Pi is charged and no real reservation is made.
+              </p>
+              <button
+                type="button"
+                className="btn btn-ghost btn-block"
+                disabled={processing}
+                onClick={onSandboxDemo}
+              >
+                {processing
+                  ? "Saving local demo…"
+                  : `Try local demo (${formatPi(amountPi)}) — not a payment`}
+              </button>
+            </div>
           )}
         </form>
 
@@ -310,7 +314,7 @@ export function Checkout() {
           </div>
           <div className="summary-row">
             <span>Details</span>
-            <span style={{ textAlign: "right", maxWidth: "14rem" }}>{cart.subtitle}</span>
+            <span className="summary-value-wrap">{cart.subtitle}</span>
           </div>
           <div className="summary-row">
             <span>Catalog (INR)</span>

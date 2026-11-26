@@ -71,7 +71,7 @@ export function HotelResults() {
           {checkin ? `Check-in ${checkin}` : "Flexible"} · {nights} night{nights === "1" ? "" : "s"} · {guests}{" "}
           guest{guests === "1" ? "" : "s"} · {formatPiUsdRate()}
         </p>
-        <p className="sample-banner" style={{ marginTop: "0.65rem" }}>
+        <p className="sample-banner mt-065">
           <span className={`badge ${source === "live" ? "badge" : "badge-sample"}`}>
             {source === "live" ? "Live" : source === "sample" ? "Sample data" : "Error"}
           </span>
@@ -124,11 +124,10 @@ export function HotelResults() {
             </div>
           ) : (
             <div className="result-list">
-              {results.map((h, i) => (
+              {results.map((h) => (
                 <article
                   key={h.id}
                   className={`result-card hotel-card${selected === h.id ? " selected" : ""}`}
-                  style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <img src={h.image} alt="" loading="lazy" />
                   <div className="result-main">
@@ -138,7 +137,7 @@ export function HotelResults() {
                       <span>{h.area}</span>
                       <span>{h.rating.toFixed(1)} rating</span>
                     </div>
-                    <p style={{ marginTop: "0.45rem", color: "var(--ink-soft)", fontSize: "0.92rem" }}>
+                    <p className="mt-045 ink-soft text-092">
                       {h.description}
                     </p>
                   </div>
@@ -148,8 +147,7 @@ export function HotelResults() {
                     <PiGcvPrice inr={h.pricePerNight} />
                     <button
                       type="button"
-                      className="btn btn-sea"
-                      style={{ marginTop: "0.55rem" }}
+                      className="btn btn-sea mt-055"
                       onClick={() => setSelected(h.id)}
                     >
                       {selected === h.id ? "Selected" : "Select"}
@@ -160,7 +158,7 @@ export function HotelResults() {
             </div>
           )}
 
-          <div style={{ marginTop: "1.25rem", display: "flex", justifyContent: "flex-end" }}>
+          <div className="btn-row btn-row-end mt-125">
             <button className="btn btn-primary" disabled={!selected} onClick={continueBook}>
               Continue to book
             </button>

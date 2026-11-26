@@ -109,35 +109,17 @@ function hostMatches(urlString, host) {
 }
 
 /**
- * Search/API browser guard:
- * - Prefer Origin matching this host
- * - If Origin is absent (some same-origin GETs), require X-Shubham-Client: web + Referer host match
+ * Search/API browser guard: Origin must match this host.
+ * No Referer / custom-header bypass (those are forgeable by any HTTP client).
+ * Clients should POST so browsers always attach Origin.
  */
 export function sameAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
-  const client = String(req.headers["x-shubham-client"] || "");
-  const referer = req.headers.referer || req.headers.referrer;
-
-  if (origin) {
-    if (hostMatches(origin, host)) {
-      next();
-      return;
-    }
-    res.status(403).json({
-      source: "error",
-      message: "Forbidden.",
-      flights: [],
-      hotels: [],
-    });
-    return;
-  }
-
-  if (client === "web" && referer && hostMatches(String(referer), host)) {
+  if (origin && hostMatches(origin, host)) {
     next();
     return;
   }
-
   res.status(403).json({
     source: "error",
     message: "Forbidden.",
@@ -149,17 +131,7 @@ export function sameAppOrigin(req, res, next) {
 export function sameAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
-  const client = request.headers.get("x-shubham-client") || "";
-  const referer = request.headers.get("referer") || request.headers.get("referrer");
-
-  if (origin) {
-    if (hostMatches(origin, host)) return null;
-    return Response.json(
-      { source: "error", message: "Forbidden.", flights: [], hotels: [] },
-      { status: 403 },
-    );
-  }
-  if (client === "web" && referer && hostMatches(referer, host)) return null;
+  if (origin && hostMatches(origin, host)) return null;
   return Response.json(
     { source: "error", message: "Forbidden.", flights: [], hotels: [] },
     { status: 403 },
@@ -178,7 +150,7 @@ export const PI_SANDBOX_CSP = [
   "base-uri 'self'",
   "object-src 'none'",
   "script-src 'self' https://sdk.minepi.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' https: data: blob:",
   "connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://sandbox-api.minepi.com https://socialchain.app https://*.minepi.com",

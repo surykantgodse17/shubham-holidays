@@ -41,31 +41,38 @@ async function createApp() {
   const protect = [rateLimit, sameAppOrigin];
   const protectPay = [paymentRateLimit, requireAppOrigin];
 
-  app.get("/api/flights", ...protect, async (req, res) => {
+  async function flightsHandler(req, res) {
     try {
-      const from = normalizeAirport(req.query.from, "DEL");
-      const to = normalizeAirport(req.query.to, "GOI");
-      const date = String(req.query.date || "").slice(0, 10);
-      const adults = Math.min(6, Math.max(1, Number(req.query.adults) || 1));
+      const src = req.method === "POST" ? req.body || {} : req.query;
+      const from = normalizeAirport(src.from, "DEL");
+      const to = normalizeAirport(src.to, "GOI");
+      const date = String(src.date || "").slice(0, 10);
+      const adults = Math.min(6, Math.max(1, Number(src.adults) || 1));
       const result = await searchFlights({ from, to, date, adults });
       res.json(result);
     } catch (err) {
       res.status(500).json({ ...safeApiError(err), flights: [] });
     }
-  });
+  }
 
-  app.get("/api/hotels", ...protect, async (req, res) => {
+  async function hotelsHandler(req, res) {
     try {
-      const city = normalizeAirport(req.query.city, "GOI");
-      const checkin = String(req.query.checkin || "").slice(0, 10);
-      const nights = Math.min(14, Math.max(1, Number(req.query.nights) || 3));
-      const adults = Math.min(6, Math.max(1, Number(req.query.adults) || 2));
+      const src = req.method === "POST" ? req.body || {} : req.query;
+      const city = normalizeAirport(src.city, "GOI");
+      const checkin = String(src.checkin || "").slice(0, 10);
+      const nights = Math.min(14, Math.max(1, Number(src.nights) || 3));
+      const adults = Math.min(6, Math.max(1, Number(src.adults) || 2));
       const result = await searchHotels({ city, checkin, nights, adults });
       res.json(result);
     } catch (err) {
       res.status(500).json({ ...safeApiError(err), hotels: [] });
     }
-  });
+  }
+
+  app.post("/api/flights", ...protect, flightsHandler);
+  app.get("/api/flights", ...protect, flightsHandler);
+  app.post("/api/hotels", ...protect, hotelsHandler);
+  app.get("/api/hotels", ...protect, hotelsHandler);
 
   app.post("/api/orders", ...protectPay, async (req, res) => {
     try {

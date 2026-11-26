@@ -139,7 +139,7 @@ export function initialPiConnectionState(): PiConnectionState {
     return {
       status: "sandbox-fallback",
       reason:
-        "Not in Pi Browser. Pay with Pi needs Pi Browser; use the sandbox demo here, or open this app in Pi Browser.",
+        "Not in Pi Browser. Real Pay with Pi needs Pi Browser. You can run a local demo only — it does not pay or book.",
       sandbox: isPiSandbox(),
     };
   }
@@ -249,7 +249,7 @@ export function loadPiSdkScript(): Promise<void> {
       scriptPromise = null;
       reject(
         new Error(
-          "Pi SDK failed to load (network or SRI mismatch). Refresh or use sandbox demo outside Pi Browser.",
+          "Pi SDK failed to load (network or SRI mismatch). Refresh in Pi Browser, or use the local demo (not a real payment).",
         ),
       );
     };
@@ -349,7 +349,7 @@ export async function connectPiForCheckout(
     const state = await withTimeout(
       connectPiInBrowser(onProgress),
       CONNECT_BUDGET_MS,
-      "Timed out connecting to Pi SDK. Retry in Pi Browser, or use a normal browser for the sandbox demo.",
+      "Timed out connecting to Pi SDK. Retry in Pi Browser, or use the local demo (not a real payment).",
     );
     onProgress?.(state);
     return state;

@@ -15,7 +15,8 @@ export type BookingRecord = CartItem & {
   guestName: string;
   email: string;
   paymentMethod: string;
-  status: "confirmed";
+  /** Real Pi path uses "confirmed"; local sandbox demo uses "demo" (not a paid reservation). */
+  status: "confirmed" | "demo";
 };
 
 const CART_KEY = "shubham-holidays-cart";

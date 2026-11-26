@@ -21,7 +21,7 @@ export function Explore() {
         <p>Browse curated journeys and local listings — book in a few steps with sample inventory.</p>
       </div>
 
-      <div className="shell" style={{ marginTop: "1rem" }}>
+      <div className="shell mt-1">
         <div className="search-tabs" role="tablist" aria-label="Listing type">
           {types.map((t) => (
             <button
@@ -36,19 +36,19 @@ export function Explore() {
           ))}
         </div>
 
-        <div className="listing-grid" style={{ marginTop: "1.25rem" }}>
+        <div className="listing-grid mt-125">
           {items.map((l) => (
             <Link key={l.id} to={`/explore/${l.id}`} className="listing-card">
               <img src={l.image} alt="" loading="lazy" />
               <div className="listing-body">
                 <span className="listing-tag">{l.type}</span>
                 <h3>{l.title}</h3>
-                <p style={{ color: "var(--ink-soft)", fontSize: "0.92rem" }}>
+                <p className="ink-soft text-092">
                   {l.place} · {l.duration}
                 </p>
                 <div className="listing-footer">
                   <div className="listing-price-block">
-                    <strong style={{ fontFamily: "var(--font-display)", color: "var(--sea-deep)" }}>
+                    <strong className="listing-price-label">
                       {formatINR(l.price)}
                     </strong>
                     <PiGcvPrice inr={l.price} />

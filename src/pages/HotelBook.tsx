@@ -90,7 +90,7 @@ export function HotelBook() {
               />
             </div>
           </div>
-          <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div className="btn-row mt-125">
             <button type="submit" className="btn btn-primary">
               Continue to payment
             </button>
@@ -108,7 +108,7 @@ export function HotelBook() {
           <img
             src={hotel.image}
             alt=""
-            style={{ borderRadius: "var(--radius-sm)", marginBottom: "1rem", maxHeight: 160, width: "100%", objectFit: "cover" }}
+            className="hotel-summary-img"
           />
           <div className="summary-row">
             <span>Hotel</span>

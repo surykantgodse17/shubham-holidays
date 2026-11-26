@@ -2,7 +2,7 @@ import { approvePayment } from "../../server/payments.js";
 import { paymentRateLimitWeb, requireAppOriginWeb } from "../../server/security.js";
 
 export async function POST(request) {
-  const limited = paymentRateLimitWeb(request);
+  const limited = await paymentRateLimitWeb(request);
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;

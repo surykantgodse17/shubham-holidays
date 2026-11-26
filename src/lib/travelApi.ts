@@ -45,12 +45,15 @@ function sampleHotelResponse(city: string): HotelSearchResponse {
   };
 }
 
-async function getJson<T>(url: string): Promise<T> {
+/** POST so browsers always send Origin (required by the API origin guard). */
+async function postJson<T>(url: string, body: Record<string, string | number>): Promise<T> {
   const res = await fetch(url, {
+    method: "POST",
     headers: {
       Accept: "application/json",
-      "X-Shubham-Client": "web",
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -65,14 +68,13 @@ export async function fetchFlights(opts: {
   date: string;
   adults: string | number;
 }): Promise<FlightSearchResponse> {
-  const q = new URLSearchParams({
-    from: opts.from,
-    to: opts.to,
-    date: opts.date,
-    adults: String(opts.adults || 1),
-  });
   try {
-    return await getJson(`/api/flights?${q}`);
+    return await postJson("/api/flights", {
+      from: opts.from,
+      to: opts.to,
+      date: opts.date,
+      adults: Number(opts.adults || 1),
+    });
   } catch {
     // Published static host may not mount Express — keep demo usable.
     return sampleFlightResponse(opts.from, opts.to);
@@ -85,14 +87,13 @@ export async function fetchHotels(opts: {
   nights: string | number;
   adults: string | number;
 }): Promise<HotelSearchResponse> {
-  const q = new URLSearchParams({
-    city: opts.city,
-    checkin: opts.checkin,
-    nights: String(opts.nights || 3),
-    adults: String(opts.adults || 2),
-  });
   try {
-    return await getJson(`/api/hotels?${q}`);
+    return await postJson("/api/hotels", {
+      city: opts.city,
+      checkin: opts.checkin,
+      nights: Number(opts.nights || 3),
+      adults: Number(opts.adults || 2),
+    });
   } catch {
     return sampleHotelResponse(opts.city);
   }

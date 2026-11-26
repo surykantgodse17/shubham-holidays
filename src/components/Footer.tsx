@@ -7,9 +7,9 @@ export function Footer() {
       <div className="shell footer-inner">
         <div className="footer-brand">
           <BrandLogo size="sm" withWordmark />
-          <p style={{ marginTop: "0.45rem" }}>Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
+          <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        <div className="footer-links">
           <Link to="/flights">Flights</Link>
           <Link to="/hotels">Hotels</Link>
           <Link to="/explore">Explore</Link>
