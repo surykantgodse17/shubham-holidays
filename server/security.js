@@ -124,6 +124,7 @@ export function safeApiError(_err) {
   };
 }
 
+/** Production / Sandbox-embed CSP (no Vite inline preamble). */
 export const PI_SANDBOX_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -137,3 +138,89 @@ export const PI_SANDBOX_CSP = [
   "frame-ancestors 'self' https://*.pinet.com https://*.minepi.com",
   "worker-src 'self' blob:",
 ].join("; ");
+
+/**
+ * Dev-only CSP: Vite React refresh needs inline/eval scripts and ws:// HMR.
+ * Still allows Pi Sandbox iframe ancestors for local embed testing.
+ */
+export const PI_DEV_CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' https: data: blob:",
+  "connect-src 'self' ws: wss: http://127.0.0.1:* http://localhost:* https://sdk.minepi.com https://api.minepi.com https://sandbox-api.minepi.com https://socialchain.app https://*.minepi.com",
+  "frame-src https://sdk.minepi.com https://app-cdn.minepi.com https://*.minepi.com",
+  "frame-ancestors 'self' https://*.pinet.com https://*.minepi.com",
+  "worker-src 'self' blob:",
+].join("; ");
+
+/** Payment routes: Origin must be present and match this host (no anonymous curl). */
+export function requireAppOrigin(req, res, next) {
+  const origin = req.headers.origin;
+  const host = req.headers.host;
+  if (!origin || !host) {
+    res.status(403).json({ ok: false, error: "Forbidden." });
+    return;
+  }
+  try {
+    if (new URL(origin).host === host) {
+      next();
+      return;
+    }
+  } catch {
+    /* fall through */
+  }
+  res.status(403).json({ ok: false, error: "Forbidden." });
+}
+
+export function requireAppOriginWeb(request) {
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (!origin || !host) {
+    return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
+  }
+  try {
+    if (new URL(origin).host === host) return null;
+  } catch {
+    /* fall through */
+  }
+  return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
+}
+
+/** Stricter payment rate limit (10/min/IP). */
+const PAY_WINDOW_MS = 60_000;
+const PAY_MAX = 10;
+const payBuckets = new Map();
+
+function takePayToken(key) {
+  const now = Date.now();
+  for (const [k, b] of payBuckets) {
+    if (now - b.start >= PAY_WINDOW_MS * 2) payBuckets.delete(k);
+  }
+  let bucket = payBuckets.get(key);
+  if (!bucket || now - bucket.start >= PAY_WINDOW_MS) {
+    bucket = { start: now, count: 0 };
+    payBuckets.set(key, bucket);
+  }
+  bucket.count += 1;
+  return bucket.count <= PAY_MAX;
+}
+
+export function paymentRateLimit(req, res, next) {
+  if (!takePayToken(clientKey(req))) {
+    res.status(429).json({ ok: false, error: "Too many payment requests. Try again shortly." });
+    return;
+  }
+  next();
+}
+
+export function paymentRateLimitWeb(request) {
+  if (takePayToken(clientKeyFromRequest(request))) return null;
+  return Response.json(
+    { ok: false, error: "Too many payment requests. Try again shortly." },
+    { status: 429 },
+  );
+}

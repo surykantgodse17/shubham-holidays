@@ -3,7 +3,6 @@ export async function GET() {
     ok: true,
     searchMode: "sample",
     piRate: "1 Pi = $314159",
-    payments: Boolean(String(process.env.PI_NETWORK_API_KEY || "").trim()),
   });
 }
 

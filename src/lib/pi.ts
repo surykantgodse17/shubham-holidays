@@ -63,6 +63,17 @@ const PAY_TIMEOUT_MS = 120_000;
 
 let scriptPromise: Promise<void> | null = null;
 let initDone = false;
+/** Latest Pi access token from authenticate — required by the payment bridge. */
+let piAccessToken = "";
+
+export function getPiAccessToken(): string {
+  return piAccessToken;
+}
+
+function rememberPiAccessToken(token?: string) {
+  const next = String(token || "").trim();
+  if (next) piAccessToken = next;
+}
 
 export function inrToUsd(inr: number): number {
   return Math.round((Number(inr) / DEMO_INR_PER_USD) * 100) / 100;
@@ -331,9 +342,16 @@ export async function connectPiForCheckout(
 
 async function postBridge(path: string, body: Record<string, string>) {
   const base = piBridgeBase();
+  const token = getPiAccessToken();
+  if (!token) {
+    throw new Error("Pi sign-in required before payment. Use Sign in with Pi, then pay again.");
+  }
   const res = await fetch(`${base}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
   });
   const text = await res.text();
@@ -372,6 +390,7 @@ export async function authenticatePi(
     AUTH_TIMEOUT_MS,
     "Timed out waiting for Pi authentication. Approve the prompt and retry.",
   );
+  rememberPiAccessToken(auth?.accessToken);
   return {
     username: auth?.user?.username,
     accessToken: auth?.accessToken,
@@ -412,11 +431,15 @@ export async function payWithPi(opts: {
     throw new Error("Pi SDK is not ready. Wait for Ready, then try again.");
   }
 
-  await withTimeout(
+  const auth = await withTimeout(
     Pi.authenticate(PI_AUTH_SCOPES, onIncompletePaymentFound),
     AUTH_TIMEOUT_MS,
     "Timed out waiting for Pi authentication. Approve the prompt in Pi Browser and retry.",
   );
+  rememberPiAccessToken(auth?.accessToken);
+  if (!getPiAccessToken()) {
+    throw new Error("Pi authenticate did not return an access token. Retry Sign in with Pi.");
+  }
 
   return withTimeout(
     new Promise<PiPaymentResult>((resolve, reject) => {

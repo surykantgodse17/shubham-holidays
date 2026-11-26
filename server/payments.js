@@ -1,6 +1,7 @@
 /**
  * Pi Network payment bridge (server-only).
  * Uses PI_NETWORK_API_KEY from the environment — never expose to the client.
+ * Approve/complete require a verified Pi user access token (Bearer).
  */
 
 const PI_API_BASE = (process.env.PI_API_BASE || "https://api.minepi.com/v2").replace(/\/$/, "");
@@ -11,6 +12,63 @@ export function piApiKey() {
 
 export function paymentsReady() {
   return Boolean(piApiKey());
+}
+
+/**
+ * Verify the caller is a signed-in Pi user by validating their access token
+ * with Pi's /me endpoint. Anonymous paymentId/txid alone is not enough.
+ */
+export async function verifyPiAccessToken(accessToken) {
+  const token = String(accessToken || "").trim();
+  if (!token) {
+    const err = new Error("Pi sign-in required.");
+    err.status = 401;
+    throw err;
+  }
+
+  const res = await fetch(`${PI_API_BASE}/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+
+  const text = await res.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!res.ok) {
+    const err = new Error("Pi session invalid or expired. Sign in with Pi again.");
+    err.status = 401;
+    throw err;
+  }
+
+  const uid = data.uid || data.user?.uid || data.identifier;
+  if (!uid) {
+    const err = new Error("Pi session invalid or expired. Sign in with Pi again.");
+    err.status = 401;
+    throw err;
+  }
+
+  return {
+    uid: String(uid),
+    username: data.username || data.user?.username || "",
+  };
+}
+
+function extractBearer(authorizationHeader) {
+  const raw = String(authorizationHeader || "").trim();
+  const match = /^Bearer\s+(.+)$/i.exec(raw);
+  return match ? match[1].trim() : "";
+}
+
+export async function requirePiCaller(authorizationHeader) {
+  return verifyPiAccessToken(extractBearer(authorizationHeader));
 }
 
 async function piFetch(path, body) {
@@ -52,7 +110,8 @@ async function piFetch(path, body) {
   return data;
 }
 
-export async function approvePayment(paymentId) {
+export async function approvePayment(paymentId, authorizationHeader) {
+  await requirePiCaller(authorizationHeader);
   const id = String(paymentId || "").trim();
   if (!id) {
     const err = new Error("Missing paymentId.");
@@ -62,7 +121,8 @@ export async function approvePayment(paymentId) {
   return piFetch(`/payments/${encodeURIComponent(id)}/approve`, {});
 }
 
-export async function completePayment(paymentId, txid) {
+export async function completePayment(paymentId, txid, authorizationHeader) {
+  await requirePiCaller(authorizationHeader);
   const id = String(paymentId || "").trim();
   const tx = String(txid || "").trim();
   if (!id || !tx) {

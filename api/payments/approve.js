@@ -1,25 +1,21 @@
 import { approvePayment } from "../../server/payments.js";
-import { rateLimitWeb, sameAppOriginWeb } from "../../server/security.js";
+import { paymentRateLimitWeb, requireAppOriginWeb } from "../../server/security.js";
 
 export async function POST(request) {
-  const limited = rateLimitWeb(request);
+  const limited = paymentRateLimitWeb(request);
   if (limited) return limited;
-  const forbidden = sameAppOriginWeb(request);
+  const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;
 
   try {
     const body = await request.json().catch(() => ({}));
-    const data = await approvePayment(body.paymentId);
+    const data = await approvePayment(body.paymentId, request.headers.get("authorization"));
     return Response.json({ ok: true, data });
   } catch (err) {
     const status = err?.status || 500;
-    return Response.json(
-      {
-        ok: false,
-        error: status >= 500 && status !== 503 ? "Payment approval failed." : err.message,
-      },
-      { status },
-    );
+    const safe =
+      status === 401 || status === 400 || status === 503 ? err.message : "Payment approval failed.";
+    return Response.json({ ok: false, error: safe }, { status });
   }
 }
 
