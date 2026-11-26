@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { cityName, flights, formatINR } from "../data/mock";
+import { cityName, formatINR, type Flight } from "../data/mock";
+import { formatPiUsdRate } from "../lib/pi";
+import { fetchFlights, rememberFlight, type TravelSource } from "../lib/travelApi";
 import { Steps } from "../components/Steps";
 
 export function FlightResults() {
@@ -12,15 +14,50 @@ export function FlightResults() {
   const guests = params.get("guests") ?? "1";
   const [nonstop, setNonstop] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [source, setSource] = useState<TravelSource>("sample");
+  const [message, setMessage] = useState("Searching flights…");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    setSelected(null);
+    fetchFlights({ from, to, date, adults: guests })
+      .then((data) => {
+        if (cancelled) return;
+        setFlights(data.flights || []);
+        setSource(data.source);
+        setMessage(data.message || (data.source === "live" ? "Live flight results" : "Sample flight data"));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setFlights([]);
+        setSource("error");
+        setError(err instanceof Error ? err.message : "Flight search failed");
+        setMessage("Could not reach flight search.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [from, to, date, guests]);
 
   const results = useMemo(() => {
-    let list = flights.filter((f) => f.from === from && f.to === to);
+    let list = flights;
     if (nonstop) list = list.filter((f) => f.stops === 0);
     return [...list].sort((a, b) => a.price - b.price);
-  }, [from, to, nonstop]);
+  }, [flights, nonstop]);
 
   function continueBook() {
     if (!selected) return;
+    const flight = flights.find((f) => f.id === selected);
+    if (!flight) return;
+    rememberFlight(flight);
     navigate(`/flights/book?id=${selected}&date=${date}&guests=${guests}`);
   }
 
@@ -32,7 +69,14 @@ export function FlightResults() {
           {cityName(from)} → {cityName(to)}
         </h1>
         <p>
-          {date ? `Departing ${date}` : "Flexible date"} · {guests} traveler{guests === "1" ? "" : "s"}
+          {date ? `Departing ${date}` : "Flexible date"} · {guests} traveler{guests === "1" ? "" : "s"} ·{" "}
+          {formatPiUsdRate()}
+        </p>
+        <p className="sample-banner" style={{ marginTop: "0.65rem" }}>
+          <span className={`badge ${source === "live" ? "badge" : "badge-sample"}`}>
+            {source === "live" ? "Live" : source === "sample" ? "Sample data" : "Error"}
+          </span>
+          {message}
         </p>
         <Steps
           items={[
@@ -60,9 +104,22 @@ export function FlightResults() {
         </aside>
 
         <div>
-          {results.length === 0 ? (
+          {loading ? (
             <div className="empty panel">
-              <p>No flights on this route. Search Delhi (DEL) → Goa (GOI) for the IndiGo 6E 2145 service.</p>
+              <p>Searching flights…</p>
+            </div>
+          ) : error ? (
+            <div className="empty panel">
+              <p className="error-text">{error}</p>
+            </div>
+          ) : results.length === 0 ? (
+            <div className="empty panel">
+              <p>
+                No flights for this search.
+                {source === "sample"
+                  ? " With sample data, try Delhi (DEL) → Goa (GOI). Add Amadeus secrets for live routes."
+                  : " Try another date or city pair."}
+              </p>
             </div>
           ) : (
             <div className="result-list">
@@ -84,7 +141,7 @@ export function FlightResults() {
                         {f.depart} → {f.arrive}
                       </span>
                       <span>{f.duration}</span>
-                      <span>{f.stops === 0 ? "Non-stop" : `${f.stops} stop`}</span>
+                      <span>{f.stops === 0 ? "Non-stop" : `${f.stops} stop${f.stops === 1 ? "" : "s"}`}</span>
                       <span>{f.cabin}</span>
                     </div>
                   </div>

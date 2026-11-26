@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { cityName, flights, formatINR } from "../data/mock";
+import { formatPiUsdRate } from "../lib/pi";
+import { recallFlight } from "../lib/travelApi";
 import { setCart } from "../lib/storage";
 import { Steps } from "../components/Steps";
 
@@ -11,7 +13,7 @@ export function FlightBook() {
   const id = params.get("id") ?? "";
   const date = params.get("date") ?? "";
   const guests = Number(params.get("guests") ?? "1");
-  const flight = flights.find((f) => f.id === id);
+  const flight = useMemo(() => recallFlight(id) || flights.find((f) => f.id === id) || null, [id]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -58,6 +60,7 @@ export function FlightBook() {
       <div className="shell page-hero">
         <span className="eyebrow">Passenger details</span>
         <h1>Book your flight</h1>
+        <p>{formatPiUsdRate()}</p>
         <Steps
           items={[
             { label: "Search", state: "done" },

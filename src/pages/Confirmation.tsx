@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BrandLogo } from "../components/BrandLogo";
 import { formatINR } from "../data/mock";
-import { formatPi } from "../lib/pi";
+import { formatPi, formatPiUsdRate } from "../lib/pi";
 import { getBookings } from "../lib/storage";
 
 export function Confirmation() {
@@ -30,7 +30,7 @@ export function Confirmation() {
         </div>
         <h1>Booking confirmed</h1>
         <p>
-          Reference <strong>{booking.bookingId}</strong> · saved in this browser
+          Reference <strong>{booking.bookingId}</strong> · saved in this browser · {formatPiUsdRate()}
         </p>
 
         <div className="panel" style={{ textAlign: "left", maxWidth: 480, margin: "0 auto 1.5rem" }}>

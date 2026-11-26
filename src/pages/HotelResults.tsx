@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { cityName, formatINR, hotels } from "../data/mock";
+import { cityName, formatINR, type Hotel } from "../data/mock";
+import { formatPiUsdRate } from "../lib/pi";
+import { fetchHotels, rememberHotel, type TravelSource } from "../lib/travelApi";
 import { Steps } from "../components/Steps";
 
 export function HotelResults() {
@@ -12,16 +14,50 @@ export function HotelResults() {
   const guests = params.get("guests") ?? "2";
   const [minStars, setMinStars] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [source, setSource] = useState<TravelSource>("sample");
+  const [message, setMessage] = useState("Searching hotels…");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    setSelected(null);
+    fetchHotels({ city, checkin, nights, adults: guests })
+      .then((data) => {
+        if (cancelled) return;
+        setHotels(data.hotels || []);
+        setSource(data.source);
+        setMessage(data.message || (data.source === "live" ? "Live hotel results" : "Sample hotel data"));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setHotels([]);
+        setSource("error");
+        setError(err instanceof Error ? err.message : "Hotel search failed");
+        setMessage("Could not reach hotel search.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [city, checkin, nights, guests]);
 
   const results = useMemo(() => {
-    let list = hotels.filter((h) => h.city === city);
-    if (list.length === 0) list = hotels.slice(0, 4);
+    let list = hotels;
     if (minStars > 0) list = list.filter((h) => h.stars >= minStars);
     return [...list].sort((a, b) => a.pricePerNight - b.pricePerNight);
-  }, [city, minStars]);
+  }, [hotels, minStars]);
 
   function continueBook() {
     if (!selected) return;
+    const hotel = hotels.find((h) => h.id === selected);
+    if (!hotel) return;
+    rememberHotel(hotel);
     navigate(`/hotels/book?id=${selected}&checkin=${checkin}&nights=${nights}&guests=${guests}`);
   }
 
@@ -32,7 +68,13 @@ export function HotelResults() {
         <h1>Hotels in {cityName(city)}</h1>
         <p>
           {checkin ? `Check-in ${checkin}` : "Flexible"} · {nights} night{nights === "1" ? "" : "s"} · {guests}{" "}
-          guest{guests === "1" ? "" : "s"}
+          guest{guests === "1" ? "" : "s"} · {formatPiUsdRate()}
+        </p>
+        <p className="sample-banner" style={{ marginTop: "0.65rem" }}>
+          <span className={`badge ${source === "live" ? "badge" : "badge-sample"}`}>
+            {source === "live" ? "Live" : source === "sample" ? "Sample data" : "Error"}
+          </span>
+          {message}
         </p>
         <Steps
           items={[
@@ -67,47 +109,54 @@ export function HotelResults() {
         </aside>
 
         <div>
-          <div className="result-list">
-            {results.map((h, i) => (
-              <article
-                key={h.id}
-                className={`result-card hotel-card${selected === h.id ? " selected" : ""}`}
-                style={{ animationDelay: `${i * 0.05}s` }}
-              >
-                <img src={h.image} alt="" loading="lazy" />
-                <div className="result-main">
-                  <h3>{h.name}</h3>
-                  <div className="result-meta">
-                    <span className="stars">{"★".repeat(h.stars)}</span>
-                    <span>{h.area}</span>
-                    <span>{h.rating.toFixed(1)} guest rating</span>
+          {loading ? (
+            <div className="empty panel">
+              <p>Searching hotels…</p>
+            </div>
+          ) : error ? (
+            <div className="empty panel">
+              <p className="error-text">{error}</p>
+            </div>
+          ) : results.length === 0 ? (
+            <div className="empty panel">
+              <p>No hotels for this search. Try Goa, Mumbai, Bengaluru, or Delhi — or add Amadeus secrets for live inventory.</p>
+            </div>
+          ) : (
+            <div className="result-list">
+              {results.map((h, i) => (
+                <article
+                  key={h.id}
+                  className={`result-card hotel-card${selected === h.id ? " selected" : ""}`}
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                >
+                  <img src={h.image} alt="" loading="lazy" />
+                  <div className="result-main">
+                    <h3>{h.name}</h3>
+                    <div className="result-meta">
+                      <span className="stars">{"★".repeat(Math.max(1, Math.min(5, h.stars)))}</span>
+                      <span>{h.area}</span>
+                      <span>{h.rating.toFixed(1)} rating</span>
+                    </div>
+                    <p style={{ marginTop: "0.45rem", color: "var(--ink-soft)", fontSize: "0.92rem" }}>
+                      {h.description}
+                    </p>
                   </div>
-                  <p style={{ marginTop: "0.55rem", color: "var(--ink-soft)", fontSize: "0.92rem" }}>
-                    {h.description}
-                  </p>
-                  <div className="chips" style={{ marginTop: "0.65rem" }}>
-                    {h.amenities.slice(0, 3).map((a) => (
-                      <span key={a} className="chip" style={{ background: "rgba(26,107,92,0.1)", color: "var(--sea-deep)" }}>
-                        {a}
-                      </span>
-                    ))}
+                  <div className="result-price">
+                    <div className="per">per night</div>
+                    <div className="amount">{formatINR(h.pricePerNight)}</div>
+                    <button
+                      type="button"
+                      className="btn btn-sea"
+                      style={{ marginTop: "0.55rem" }}
+                      onClick={() => setSelected(h.id)}
+                    >
+                      {selected === h.id ? "Selected" : "Select"}
+                    </button>
                   </div>
-                </div>
-                <div className="result-price">
-                  <div className="per">per night</div>
-                  <div className="amount">{formatINR(h.pricePerNight)}</div>
-                  <button
-                    type="button"
-                    className="btn btn-sea"
-                    style={{ marginTop: "0.55rem" }}
-                    onClick={() => setSelected(h.id)}
-                  >
-                    {selected === h.id ? "Selected" : "Select"}
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
 
           <div style={{ marginTop: "1.25rem", display: "flex", justifyContent: "flex-end" }}>
             <button className="btn btn-primary" disabled={!selected} onClick={continueBook}>
