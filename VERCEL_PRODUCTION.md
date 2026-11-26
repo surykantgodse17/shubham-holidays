@@ -2,8 +2,10 @@
 
 | Target | URL | Pi network | API key |
 | --- | --- | --- | --- |
-| **Grok (unchanged)** | https://shubham-holidays.apps.grok.bot | Leave as currently published | Cursor secret `PI_NETWORK_API_KEY` |
-| **Vercel Production** | https://shubham-holidays.vercel.app | Mainnet (`Pi.init({ sandbox: false })`) | Vercel env `PI_NETWORK_API_KEY` (Mainnet key only) |
+| **Main live domain (Vercel Mainnet)** | https://shubhamholidays.vercel.app | Mainnet (`Pi.init({ sandbox: false })`) | Vercel env `PI_NETWORK_API_KEY` (Mainnet key only) |
+| Grok (not main) | https://shubham-holidays.apps.grok.bot | Staging / secondary | Cursor secret `PI_NETWORK_API_KEY` |
+
+Do **not** use `shubham-holidays.vercel.app` (hyphen) as the main domain.
 
 Do **not** reuse the Testnet key on Vercel. Keys stay on the host — never in source.
 
