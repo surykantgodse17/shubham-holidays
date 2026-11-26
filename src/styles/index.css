@@ -500,8 +500,7 @@ p {
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(180deg, rgba(14, 64, 56, 0.15) 0%, rgba(20, 38, 31, 0.55) 55%, rgba(20, 38, 31, 0.78) 100%),
-    url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80") center / cover no-repeat;
+    url("/hero-mainnet.jpg") center / cover no-repeat;
   transform: scale(1.04);
   animation: hero-drift 18s ease-in-out infinite alternate;
 }
@@ -511,8 +510,19 @@ p {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 70% 20%, rgba(217, 119, 6, 0.18), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 15% 80%, rgba(36, 138, 120, 0.25), transparent 50%);
+    linear-gradient(
+      180deg,
+      rgba(8, 18, 24, 0.55) 0%,
+      rgba(8, 18, 24, 0.35) 35%,
+      rgba(8, 18, 24, 0.72) 70%,
+      rgba(8, 18, 24, 0.88) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(8, 18, 24, 0.45) 0%,
+      rgba(8, 18, 24, 0.15) 50%,
+      rgba(8, 18, 24, 0.4) 100%
+    );
   pointer-events: none;
 }
 
