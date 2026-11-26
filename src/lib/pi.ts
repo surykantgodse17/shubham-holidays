@@ -139,8 +139,8 @@ export function initialPiConnectionState(): PiConnectionState {
     return {
       status: "sandbox-fallback",
       reason:
-        "Open this app in the Pi Sandbox (or Pi Browser) for Test Pi. Here you can only run a local demo — it does not pay or book.",
-      sandbox: true,
+        "Open this app in Pi Browser for Mainnet Pi payments. Here you can only run a local demo — it does not pay or book.",
+      sandbox: false,
     };
   }
   return { status: "connecting", detail: "Loading Pi SDK…" };
@@ -151,12 +151,13 @@ export function isPiSdkAvailable(): boolean {
 }
 
 /**
- * Pi network mode for SDK init — Staging / Testnet / Test Pi only.
- * Always `sandbox: true` (no Mainnet / Real Pi until the user asks).
- * `VITE_PI_SANDBOX=false` is ignored while this app stays Staging-only.
+ * Pi network mode for SDK init — Production / Mainnet.
+ * `sandbox: false` charges real Pi. Set `VITE_PI_SANDBOX=true` only for local Testnet experiments.
  */
 export function isPiSandbox(): boolean {
-  return true;
+  const flag = String(import.meta.env.VITE_PI_SANDBOX || "").trim().toLowerCase();
+  if (flag === "true" || flag === "1") return true;
+  return false;
 }
 
 /**
@@ -239,7 +240,7 @@ export function loadPiSdkScript(): Promise<void> {
       scriptPromise = null;
       reject(
         new Error(
-          "Pi SDK failed to load (network or SRI mismatch). Refresh in the Pi Sandbox, or use the local demo (not a real payment).",
+          "Pi SDK failed to load (network or SRI mismatch). Refresh in Pi Browser, or use the local demo (not a real payment).",
         ),
       );
     };
@@ -261,8 +262,7 @@ export async function initPiSdkInBrowser(): Promise<void> {
   await withTimeout(
     new Promise<void>((resolve, reject) => {
       try {
-        // Staging / Testnet only — always Test Pi.
-        window.Pi!.init({ version: "2.0", sandbox: true });
+        window.Pi!.init({ version: "2.0", sandbox: isPiSandbox() });
         initDone = true;
         // Give the SDK a tick to settle its bridge; do not wait forever.
         window.setTimeout(() => resolve(), 50);
@@ -340,7 +340,7 @@ export async function connectPiForCheckout(
     const state = await withTimeout(
       connectPiInBrowser(onProgress),
       CONNECT_BUDGET_MS,
-      "Timed out connecting to Pi SDK. Retry in the Pi Sandbox, or use the local demo (not a real payment).",
+      "Timed out connecting to Pi SDK. Retry in Pi Browser, or use the local demo (not a real payment).",
     );
     onProgress?.(state);
     return state;
@@ -439,14 +439,14 @@ export type PiUserSession = {
   accessToken?: string;
 };
 
-/** Pi Login (authenticate) for Staging Test Pi — open in Sandbox / Pi Browser. */
+/** Pi Login (authenticate) for Mainnet — open in Pi Browser. */
 export async function authenticatePi(
   scopes: string[] = ["username", "payments", "wallet_address"],
 ): Promise<PiUserSession> {
   await initPiSdkInBrowser();
   const Pi = window.Pi;
   if (!Pi?.authenticate) {
-    throw new Error("Pi SDK authenticate is unavailable. Open this app in the Pi Sandbox.");
+    throw new Error("Pi SDK authenticate is unavailable. Open this app in Pi Browser.");
   }
   const auth = await withTimeout(
     Pi.authenticate(scopes, onIncompletePaymentFound),
@@ -476,7 +476,7 @@ export async function payWithSandboxDemo(opts: {
 }
 
 /**
- * Test Pi payment via Pi.authenticate + Pi.createPayment (SDK init with sandbox: true).
+ * Mainnet Pi payment via Pi.authenticate + Pi.createPayment (SDK init with sandbox: false).
  * Does not fall back to the local non-payment demo.
  */
 export async function payWithPi(opts: {
@@ -490,19 +490,19 @@ export async function payWithPi(opts: {
   if (!opts.kind || !opts.productId) throw new Error("Missing product for checkout.");
 
   if (!inPiBrowser()) {
-    throw new Error("Open this app in the Pi Sandbox (Testnet) to pay with Test Pi.");
+    throw new Error("Open this app in Pi Browser to pay with Pi (Mainnet).");
   }
 
   await initPiSdkInBrowser();
   const Pi = window.Pi;
   if (!Pi?.createPayment || !Pi.authenticate) {
-    throw new Error("Pi SDK is not ready. Wait for Ready, then try Pay with Test Pi again.");
+    throw new Error("Pi SDK is not ready. Wait for Ready, then try Pay with Pi again.");
   }
 
   const auth = await withTimeout(
     Pi.authenticate(PI_AUTH_SCOPES, onIncompletePaymentFound),
     AUTH_TIMEOUT_MS,
-    "Timed out waiting for Pi authentication. Approve the prompt in Sandbox / Pi Browser and retry.",
+    "Timed out waiting for Pi authentication. Approve the prompt in Pi Browser and retry.",
   );
   rememberPiAccessToken(auth?.accessToken);
   if (!getPiAccessToken()) {

@@ -47,8 +47,8 @@ function statusDetail(state: PiConnectionState): string {
       return state.detail;
     case "ready":
       return state.hasBridge
-        ? "Pi Sandbox ready (Testnet / Test Pi). You can pay with Test Pi."
-        : "Pi Sandbox + SDK ready (Testnet), but the payment bridge did not respond.";
+        ? "Pi Browser ready (Mainnet). You can pay with Pi."
+        : "Pi Browser + SDK ready (Mainnet), but the payment bridge did not respond.";
     case "sandbox-fallback":
       return state.reason;
     case "error":
@@ -138,7 +138,7 @@ export function Checkout() {
     e.preventDefault();
     setError("");
     if (!canPayWithPi) {
-      setError("Test Pi is not ready yet. Wait for Ready, or open this app in the Pi Sandbox.");
+      setError("Pi is not ready yet. Wait for Ready, or open this app in Pi Browser.");
       return;
     }
     setProcessing(true);
@@ -153,13 +153,13 @@ export function Checkout() {
         memo,
         bookingId,
       });
-      await finishBooking(bookingId, "Test Pi (Sandbox / Testnet)", result.amountPi, {
+      await finishBooking(bookingId, "Pi (Mainnet)", result.amountPi, {
         status: "confirmed",
         paymentId: result.paymentId,
         txid: result.txid,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Test Pi payment failed.");
+      setError(err instanceof Error ? err.message : "Pi payment failed.");
     } finally {
       setProcessing(false);
     }
@@ -200,9 +200,9 @@ export function Checkout() {
       <div className="shell page-hero checkout-hero">
         <BrandLogo size="lg" />
         <span className="eyebrow">Checkout</span>
-        <h1>Pay with Test Pi</h1>
+        <h1>Pay with Pi</h1>
         <p>
-          Staging / Testnet only. Fares are in INR; Test Pi is charged at GCV{" "}
+          Production Mainnet. Fares are in INR; Pi is charged at GCV{" "}
           <strong>{formatPiUsdRate()}</strong>
           {" "}(catalog USD ÷ 314159; not market price).
         </p>
@@ -218,7 +218,7 @@ export function Checkout() {
 
       <div className="shell book-layout">
         <form className="panel" onSubmit={onPayPi}>
-          <h2>Test Pi payment (Sandbox)</h2>
+          <h2>Pi payment (Mainnet)</h2>
 
           <div className={`pi-status pi-status-${conn.status}`} role="status" aria-live="polite">
             <div className="pi-status-row">
@@ -226,7 +226,7 @@ export function Checkout() {
                 {statusLabel(conn)}
               </span>
               {conn.status === "ready" && (
-                <span className="badge badge-sample">Testnet · Test Pi</span>
+                <span className="badge badge-sample">Mainnet · Pi</span>
               )}
               {conn.status === "sandbox-fallback" && (
                 <span className="badge badge-sample">Not a real payment</span>
@@ -262,7 +262,7 @@ export function Checkout() {
                 }
               }}
             >
-              {piUser ? `Signed in as @${piUser}` : "Sign in with Pi (Testnet)"}
+              {piUser ? `Signed in as @${piUser}` : "Sign in with Pi"}
             </button>
           )}
 
@@ -272,12 +272,12 @@ export function Checkout() {
             disabled={processing || isConnecting || !canPayWithPi}
           >
             {processing && canPayWithPi
-              ? "Waiting for Test Pi…"
+              ? "Waiting for Pi…"
               : isConnecting
-                ? "Checking Pi Sandbox…"
+                ? "Checking Pi Browser…"
                 : canPayWithPi
-                  ? `Pay with Test Pi (${formatPi(amountPi)})`
-                  : "Pay with Test Pi (open in Sandbox)"}
+                  ? `Pay with Pi (${formatPi(amountPi)})`
+                  : "Pay with Pi (open in Pi Browser)"}
           </button>
 
           {canSandboxDemo && (
