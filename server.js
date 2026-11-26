@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { searchFlights, searchHotels, normalizeAirport } from "./server/travel.js";
@@ -21,13 +22,48 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 5173);
 const isProd = process.env.NODE_ENV === "production";
 
+/** Exact Pi domain ownership key — served as raw bytes, no SPA/CSP wrapping. */
+function readValidationKey() {
+  const candidates = [
+    path.join(__dirname, "public", "validation-key.txt"),
+    path.join(__dirname, "dist", "validation-key.txt"),
+  ];
+  for (const file of candidates) {
+    try {
+      return fs.readFileSync(file);
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
+}
+
+function sendValidationKey(_req, res) {
+  const body = readValidationKey();
+  if (!body) {
+    res.status(404).type("text/plain").send("missing");
+    return;
+  }
+  res.removeHeader("Content-Security-Policy");
+  res.removeHeader("X-Frame-Options");
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Length", String(body.length));
+  res.status(200).end(body);
+}
+
 async function createApp() {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
+
+  // Pi ownership verify — register before JSON/CSP middleware.
+  app.get("/validation-key.txt", sendValidationKey);
+
   app.use(express.json({ limit: "64kb" }));
 
-  app.use((_req, res, next) => {
+  app.use((req, res, next) => {
+    if (req.path === "/validation-key.txt") return next();
     res.removeHeader("X-Frame-Options");
     res.setHeader("Content-Security-Policy", isProd ? PI_SANDBOX_CSP : PI_DEV_CSP);
     next();

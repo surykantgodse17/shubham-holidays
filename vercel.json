@@ -14,7 +14,14 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/validation-key.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/((?!validation-key\\.txt$).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
