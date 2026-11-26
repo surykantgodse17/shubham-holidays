@@ -122,23 +122,24 @@ function hostMatches(urlString, host) {
   }
 }
 
-/** Fetch Metadata: browsers send this; reject cross-site. Curl may omit it. */
+/**
+ * Fetch Metadata required — Origin alone is forgeable by non-browser clients.
+ * Browsers always send Sec-Fetch-Site on fetch/XHR; require same-origin/same-site/none.
+ */
 function fetchSiteOk(secFetchSite) {
-  if (!secFetchSite) return null; // absent — rely on Origin + browser cookie elsewhere
+  if (!secFetchSite) return false;
   const site = String(secFetchSite).toLowerCase();
-  if (site === "same-origin" || site === "same-site" || site === "none") return true;
-  return false;
+  return site === "same-origin" || site === "same-site" || site === "none";
 }
 
 function originAndFetchOk(origin, host, secFetchSite) {
   if (!origin || !hostMatches(origin, host)) return false;
-  const fetchOk = fetchSiteOk(secFetchSite);
-  if (fetchOk === false) return false;
+  if (!fetchSiteOk(secFetchSite)) return false;
   return true;
 }
 
 /**
- * Search/API browser guard: matching Origin + reject cross-site Sec-Fetch-Site.
+ * Search/API browser guard: matching Origin + required same-site Sec-Fetch-Site.
  */
 export function sameAppOrigin(req, res, next) {
   const origin = req.headers.origin;
@@ -202,7 +203,7 @@ export const PI_DEV_CSP = [
   "worker-src 'self' blob:",
 ].join("; ");
 
-/** Payment/checkout routes: Origin match + reject cross-site fetch. */
+/** Payment/checkout routes: Origin match + required same-site Sec-Fetch-Site. */
 export function requireAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;

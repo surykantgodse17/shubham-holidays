@@ -42,6 +42,17 @@ export function browserSetCookieHeader(browserId, { secure }) {
   return parts.join("; ");
 }
 
+/** Drop expired rows (and stale consumed) so create cannot grow the table unbounded. */
+export async function purgeCheckoutSessions() {
+  await sql(`delete from checkout_sessions where expires_at < now()`);
+  await sql(
+    `delete from checkout_sessions
+     where status = 'consumed'
+       and consumed_at is not null
+       and consumed_at < now() - interval '1 day'`,
+  );
+}
+
 /**
  * Create a locked checkout session from catalog (ignores client amounts).
  */
@@ -61,6 +72,8 @@ export async function createCheckoutSession({
     throw err;
   }
 
+  await purgeCheckoutSessions();
+
   const priced = priceFromCatalog({ kind, productId, guests, nights });
   const amountUsd = priced.amountUsd;
   const amountPi = usdToPi(amountUsd);
@@ -68,6 +81,18 @@ export async function createCheckoutSession({
     const err = new Error("Invalid catalog price for checkout.");
     err.status = 400;
     throw err;
+  }
+
+  // Cap open sessions per browser to limit storage under cookie rotation.
+  const openRows = await sql(
+    `select id from checkout_sessions
+     where browser_id = $1 and status = 'open'
+     order by created_at asc`,
+    [bid],
+  );
+  if (openRows.length >= 5) {
+    const dropIds = openRows.slice(0, openRows.length - 4).map((r) => r.id);
+    await sql(`delete from checkout_sessions where id = any($1::text[])`, [dropIds]);
   }
 
   const id = crypto.randomBytes(16).toString("hex");
@@ -125,7 +150,7 @@ export async function consumeCheckoutSession({ checkoutId, browserId, bookingId,
     throw err;
   }
 
-  await sql(`delete from checkout_sessions where expires_at < now()`);
+  await purgeCheckoutSessions();
 
   const rows = await sql(
     `select * from checkout_sessions where id = $1 and browser_id = $2`,

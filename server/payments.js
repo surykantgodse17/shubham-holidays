@@ -2,12 +2,13 @@
  * Pi Network payment bridge (server-only).
  * Approve/complete require:
  * 1) verified Pi user Bearer token
- * 2) server-signed order ticket
+ * 2) server-signed order ticket (jti claimed once)
  * 3) Pi payment amount/metadata matching that order
  */
 
 import { verifyOrderTicket } from "./orders.js";
 import { piAmountsEqual } from "./pricing.js";
+import { sql } from "./db.js";
 
 const PI_API_BASE = (process.env.PI_API_BASE || "https://api.minepi.com/v2").replace(/\/$/, "");
 
@@ -158,6 +159,69 @@ async function assertPaymentMatchesOrder(payment, caller, orderTokenFromBody) {
   return order;
 }
 
+async function purgeExpiredOrderTickets() {
+  await sql(`delete from order_ticket_uses where expires_at < now()`);
+}
+
+/**
+ * One-time jti claim: a signed order may approve/complete exactly one Pi paymentId.
+ * Same paymentId retries are idempotent; a different paymentId is rejected.
+ */
+async function claimOrderTicketForPayment(order, paymentId, phase) {
+  const jti = String(order?.jti || "").trim();
+  if (!jti) {
+    const err = new Error("Invalid or missing server order.");
+    err.status = 400;
+    throw err;
+  }
+
+  await purgeExpiredOrderTickets();
+
+  const expiresAt = new Date(Number(order.exp) || Date.now() + 30 * 60 * 1000);
+  const existing = await sql(`select jti, payment_id, status from order_ticket_uses where jti = $1`, [
+    jti,
+  ]);
+  let row = existing[0];
+
+  if (!row) {
+    try {
+      await sql(
+        `insert into order_ticket_uses (jti, payment_id, uid, status, expires_at)
+         values ($1, $2, $3, $4, $5)`,
+        [
+          jti,
+          paymentId,
+          String(order.uid),
+          phase === "complete" ? "completed" : "approved",
+          expiresAt.toISOString(),
+        ],
+      );
+      return;
+    } catch (err) {
+      // Concurrent claim — re-read and enforce single payment binding.
+      const again = await sql(`select jti, payment_id, status from order_ticket_uses where jti = $1`, [
+        jti,
+      ]);
+      if (!again[0] || String(again[0].payment_id) !== String(paymentId)) {
+        const conflict = new Error("This order was already used for another payment.");
+        conflict.status = 409;
+        throw conflict;
+      }
+      row = again[0];
+    }
+  }
+
+  if (String(row.payment_id) !== String(paymentId)) {
+    const err = new Error("This order was already used for another payment.");
+    err.status = 409;
+    throw err;
+  }
+
+  if (phase === "complete" && row.status !== "completed") {
+    await sql(`update order_ticket_uses set status = 'completed' where jti = $1`, [jti]);
+  }
+}
+
 export async function approvePayment(paymentId, authorizationHeader, orderToken) {
   const caller = await requirePiCaller(authorizationHeader);
   const id = String(paymentId || "").trim();
@@ -168,7 +232,8 @@ export async function approvePayment(paymentId, authorizationHeader, orderToken)
   }
 
   const payment = await getPayment(id);
-  await assertPaymentMatchesOrder(payment, caller, orderToken);
+  const order = await assertPaymentMatchesOrder(payment, caller, orderToken);
+  await claimOrderTicketForPayment(order, id, "approve");
   return piKeyFetch(`/payments/${encodeURIComponent(id)}/approve`, {
     method: "POST",
     body: {},
@@ -186,7 +251,8 @@ export async function completePayment(paymentId, txid, authorizationHeader, orde
   }
 
   const payment = await getPayment(id);
-  await assertPaymentMatchesOrder(payment, caller, orderToken);
+  const order = await assertPaymentMatchesOrder(payment, caller, orderToken);
+  await claimOrderTicketForPayment(order, id, "complete");
   return piKeyFetch(`/payments/${encodeURIComponent(id)}/complete`, {
     method: "POST",
     body: { txid: tx },
