@@ -332,38 +332,6 @@ p {
   gap: 0.65rem;
 }
 
-.nav-contact {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.nav-contact-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  color: var(--sea-deep);
-  border: 1px solid transparent;
-  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
-  font-size: 0.8rem;
-  font-weight: 600;
-  max-width: 16rem;
-}
-
-.nav-contact-link:hover {
-  background: rgba(26, 107, 92, 0.08);
-  border-color: var(--line);
-}
-
-.nav-contact-email,
-.nav-contact-phone {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .menu-btn {
   display: none;
   width: 2.5rem;
@@ -426,8 +394,6 @@ p {
     border-radius: var(--radius-sm);
   }
   .nav-cta .btn { display: none; }
-  .nav-contact-email,
-  .nav-contact-phone { display: none; }
 }
 
 /* Buttons */
