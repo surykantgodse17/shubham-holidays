@@ -1,0 +1,19 @@
+{
+  "name": "shubham-holidays",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shubham Holidays — flight and hotel booking for Pi Network users",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pi-backend": "^0.1.3"
+  }
+}
