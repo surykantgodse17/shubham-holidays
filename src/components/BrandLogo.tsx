@@ -22,7 +22,7 @@ export function BrandLogo({
   return (
     <span className={`brand-logo ${inverted ? "inverted" : ""} ${className}`.trim()}>
       <img
-        src="/app-icon.png"
+        src="/logo.jpg"
         alt={withWordmark ? "" : "Shubham Holidays"}
         width={px}
         height={px}

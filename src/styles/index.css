@@ -150,27 +150,16 @@ p {
   letter-spacing: -0.03em;
   flex-shrink: 0;
   max-width: none;
-  text-decoration: none;
-  color: inherit;
 }
 
 .nav-logo {
   display: block;
   height: 48px;
-  width: 48px;
-  border-radius: 0.7rem;
+  width: auto;
+  max-width: min(70vw, 280px);
   object-fit: contain;
-  object-position: center;
+  object-position: left center;
   background: transparent;
-  flex-shrink: 0;
-}
-
-.nav-brand-text {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
 }
 
 .brand-logo {
@@ -409,10 +398,7 @@ p {
 @media (max-width: 820px) {
   .nav-logo {
     height: 36px;
-    width: 36px;
-  }
-  .nav-brand-text {
-    font-size: 0.95rem;
+    max-width: min(72vw, 220px);
   }
   .menu-btn { display: inline-flex; }
   .nav-links {
