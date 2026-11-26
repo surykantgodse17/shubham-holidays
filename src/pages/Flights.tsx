@@ -21,7 +21,7 @@ export function Flights() {
       <div className="shell page-hero">
         <span className="eyebrow">Flights</span>
         <h1>Find your flight</h1>
-        <p>Live Amadeus search when secrets are set; otherwise sample IndiGo Delhi → Goa.</p>
+        <p>Sample IndiGo Delhi → Goa inventory (public demo; rate-limited search API).</p>
         <Steps
           items={[
             { label: "Search", state: "active" },
@@ -75,7 +75,7 @@ export function Flights() {
           </div>
           <p className="sample-banner">
             <span className="badge badge-sample">Sample data</span>
-            Live results when AMADEUS_CLIENT_ID / AMADEUS_CLIENT_SECRET are set. Sample fallback: Delhi (DEL) → Goa (GOI).
+            Sample route: Delhi (DEL) → Goa (GOI) · IndiGo 6E 2145.
           </p>
         </form>
       </div>

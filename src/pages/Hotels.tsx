@@ -76,7 +76,7 @@ export function Hotels() {
           </div>
           <p className="sample-banner">
             <span className="badge badge-sample">Sample data</span>
-            Live hotels when Amadeus secrets are set. Sample cities: Goa, Mumbai, Bengaluru, Delhi.
+            Sample cities: Goa, Mumbai, Bengaluru, Delhi.
           </p>
         </form>
       </div>

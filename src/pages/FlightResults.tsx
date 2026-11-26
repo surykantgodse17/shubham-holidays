@@ -117,7 +117,7 @@ export function FlightResults() {
               <p>
                 No flights for this search.
                 {source === "sample"
-                  ? " With sample data, try Delhi (DEL) → Goa (GOI). Add Amadeus secrets for live routes."
+                  ? " Try Delhi (DEL) → Goa (GOI) for the sample IndiGo flight."
                   : " Try another date or city pair."}
               </p>
             </div>

@@ -1,7 +1,8 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { searchFlights, searchHotels } from "./server/travel.js";
+import { searchFlights, searchHotels, normalizeAirport } from "./server/travel.js";
+import { rateLimit, sameAppOrigin, safeApiError } from "./server/security.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 5173);
@@ -10,48 +11,41 @@ const isProd = process.env.NODE_ENV === "production";
 async function createApp() {
   const app = express();
   app.disable("x-powered-by");
+  app.set("trust proxy", 1);
 
   app.get("/api/health", (_req, res) => {
     res.json({
       ok: true,
-      amadeusConfigured: Boolean(
-        process.env.AMADEUS_CLIENT_ID?.trim() && process.env.AMADEUS_CLIENT_SECRET?.trim(),
-      ),
+      searchMode: "sample",
       piRate: "1 Pi = $314159",
     });
   });
 
-  app.get("/api/flights", async (req, res) => {
+  const protect = [rateLimit, sameAppOrigin];
+
+  app.get("/api/flights", ...protect, async (req, res) => {
     try {
-      const from = String(req.query.from || "DEL").toUpperCase();
-      const to = String(req.query.to || "GOI").toUpperCase();
-      const date = String(req.query.date || "");
-      const adults = Math.min(6, Math.max(1, Number(req.query.adults || 1)));
+      const from = normalizeAirport(req.query.from, "DEL");
+      const to = normalizeAirport(req.query.to, "GOI");
+      const date = String(req.query.date || "").slice(0, 10);
+      const adults = Math.min(6, Math.max(1, Number(req.query.adults) || 1));
       const result = await searchFlights({ from, to, date, adults });
       res.json(result);
     } catch (err) {
-      res.status(500).json({
-        source: "error",
-        message: err instanceof Error ? err.message : "Flight search failed",
-        flights: [],
-      });
+      res.status(500).json({ ...safeApiError(err), flights: [] });
     }
   });
 
-  app.get("/api/hotels", async (req, res) => {
+  app.get("/api/hotels", ...protect, async (req, res) => {
     try {
-      const city = String(req.query.city || "GOI").toUpperCase();
-      const checkin = String(req.query.checkin || "");
-      const nights = Math.min(14, Math.max(1, Number(req.query.nights || 3)));
-      const adults = Math.min(6, Math.max(1, Number(req.query.adults || 2)));
+      const city = normalizeAirport(req.query.city, "GOI");
+      const checkin = String(req.query.checkin || "").slice(0, 10);
+      const nights = Math.min(14, Math.max(1, Number(req.query.nights) || 3));
+      const adults = Math.min(6, Math.max(1, Number(req.query.adults) || 2));
       const result = await searchHotels({ city, checkin, nights, adults });
       res.json(result);
     } catch (err) {
-      res.status(500).json({
-        source: "error",
-        message: err instanceof Error ? err.message : "Hotel search failed",
-        hotels: [],
-      });
+      res.status(500).json({ ...safeApiError(err), hotels: [] });
     }
   });
 

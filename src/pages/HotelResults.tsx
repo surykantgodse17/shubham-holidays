@@ -119,7 +119,7 @@ export function HotelResults() {
             </div>
           ) : results.length === 0 ? (
             <div className="empty panel">
-              <p>No hotels for this search. Try Goa, Mumbai, Bengaluru, or Delhi — or add Amadeus secrets for live inventory.</p>
+              <p>No hotels for this search. Try Goa, Mumbai, Bengaluru, or Delhi.</p>
             </div>
           ) : (
             <div className="result-list">
