@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { cityName, formatINR, type Hotel } from "../data/mock";
 import { formatPiUsdRate } from "../lib/pi";
 import { fetchHotels, rememberHotel, type TravelSource } from "../lib/travelApi";
+import { PiGcvPrice } from "../components/PiGcvPrice";
 import { Steps } from "../components/Steps";
 
 export function HotelResults() {
@@ -144,6 +145,7 @@ export function HotelResults() {
                   <div className="result-price">
                     <div className="per">per night</div>
                     <div className="amount">{formatINR(h.pricePerNight)}</div>
+                    <PiGcvPrice inr={h.pricePerNight} />
                     <button
                       type="button"
                       className="btn btn-sea"

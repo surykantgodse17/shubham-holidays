@@ -96,9 +96,30 @@ export function formatPi(amount: number): string {
   return `${amount.toFixed(7)} π`;
 }
 
+/** Plain π figure for GCV lines (trim trailing zeros). */
+export function formatPiPlain(amount: number): string {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n <= 0) return "0";
+  return n.toFixed(7).replace(/\.?0+$/, "");
+}
+
 /** UI copy: exactly `1 Pi = $314159` */
 export function formatPiUsdRate(): string {
   return PI_USD_RATE_COPY;
+}
+
+/**
+ * Listing-card GCV line, e.g. `₹4,890 = 0.0001875 Pi (1 Pi = $314159)`.
+ * Uses the same catalog INR → USD → USD/314159 path as the server.
+ */
+export function formatInrPiGcv(inr: number): string {
+  const pi = formatPiPlain(inrToPi(inr));
+  const rupees = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(inr) || 0);
+  return `${rupees} = ${pi} Pi (${PI_USD_RATE_COPY})`;
 }
 
 /**

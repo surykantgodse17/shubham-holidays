@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatINR, listings } from "../data/mock";
+import { PiGcvPrice } from "../components/PiGcvPrice";
 
 const types = ["All", "Package", "Experience", "Partner"] as const;
 
@@ -46,9 +47,12 @@ export function Explore() {
                   {l.place} · {l.duration}
                 </p>
                 <div className="listing-footer">
-                  <strong style={{ fontFamily: "var(--font-display)", color: "var(--sea-deep)" }}>
-                    {formatINR(l.price)}
-                  </strong>
+                  <div className="listing-price-block">
+                    <strong style={{ fontFamily: "var(--font-display)", color: "var(--sea-deep)" }}>
+                      {formatINR(l.price)}
+                    </strong>
+                    <PiGcvPrice inr={l.price} />
+                  </div>
                   <span className="btn-text">View →</span>
                 </div>
               </div>

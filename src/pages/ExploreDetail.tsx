@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { formatINR, listings } from "../data/mock";
+import { PiGcvPrice } from "../components/PiGcvPrice";
 import { setCart } from "../lib/storage";
 
 export function ExploreDetail() {
@@ -86,6 +87,7 @@ export function ExploreDetail() {
                 {formatINR(listing.price)}
               </span>
             </div>
+            <PiGcvPrice inr={listing.price} className="pi-gcv-price pi-gcv-price--end" />
             <div className="form-grid" style={{ marginTop: "1rem" }}>
               <div className="field">
                 <label htmlFor="date">Preferred date</label>

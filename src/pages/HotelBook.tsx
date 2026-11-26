@@ -5,6 +5,7 @@ import { cityName, formatINR, hotels } from "../data/mock";
 import { formatPiUsdRate } from "../lib/pi";
 import { recallHotel } from "../lib/travelApi";
 import { setCart } from "../lib/storage";
+import { PiGcvPrice } from "../components/PiGcvPrice";
 import { Steps } from "../components/Steps";
 
 export function HotelBook() {
@@ -127,6 +128,7 @@ export function HotelBook() {
             <span>Total</span>
             <span>{formatINR(total)}</span>
           </div>
+          <PiGcvPrice inr={total} className="pi-gcv-price pi-gcv-price--end" />
         </aside>
       </div>
     </div>

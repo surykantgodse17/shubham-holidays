@@ -5,6 +5,7 @@ import { cityName, flights, formatINR } from "../data/mock";
 import { formatPiUsdRate } from "../lib/pi";
 import { recallFlight } from "../lib/travelApi";
 import { setCart } from "../lib/storage";
+import { PiGcvPrice } from "../components/PiGcvPrice";
 import { Steps } from "../components/Steps";
 
 export function FlightBook() {
@@ -127,6 +128,7 @@ export function FlightBook() {
             <span>Total</span>
             <span>{formatINR(total)}</span>
           </div>
+          <PiGcvPrice inr={total} className="pi-gcv-price pi-gcv-price--end" />
         </aside>
       </div>
     </div>
