@@ -24,7 +24,7 @@ export function Nav() {
             src="/logo-full.png"
             alt="Shubham Holidays"
             className="nav-logo"
-            width={168}
+            width={220}
             height={48}
             decoding="async"
           />

@@ -20,7 +20,7 @@
   --radius-sm: 10px;
   --font-display: "Syne", sans-serif;
   --font-body: "Plus Jakarta Sans", sans-serif;
-  --nav-h: 4.25rem;
+  --nav-h: 4.5rem;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   color-scheme: light;
 }
@@ -149,14 +149,14 @@ p {
   font-size: 1.05rem;
   letter-spacing: -0.03em;
   flex-shrink: 0;
-  max-width: min(52vw, 200px);
+  max-width: none;
 }
 
 .nav-logo {
   display: block;
-  height: 40px;
+  height: 48px;
   width: auto;
-  max-width: 100%;
+  max-width: min(70vw, 280px);
   object-fit: contain;
   object-position: left center;
   background: transparent;
@@ -334,10 +334,8 @@ p {
 
 @media (max-width: 820px) {
   .nav-logo {
-    height: 34px;
-  }
-  .brand {
-    max-width: min(58vw, 180px);
+    height: 36px;
+    max-width: min(72vw, 220px);
   }
   .menu-btn { display: inline-flex; }
   .nav-links {
