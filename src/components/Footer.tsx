@@ -28,6 +28,8 @@ export function Footer() {
           <Link to="/explore">Explore</Link>
           <Link to="/bookings">Bookings</Link>
           <Link to="/contact">Contact</Link>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
         </div>
         <div className="footer-contact">
           <h3 className="footer-contact-title">Contact</h3>

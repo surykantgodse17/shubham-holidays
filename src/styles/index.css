@@ -1463,6 +1463,34 @@ p {
 .booking-meta { font-size: 0.82rem; color: var(--ink-muted); }
 .footer-tagline { margin-top: 0.45rem; }
 .footer-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+.legal-doc {
+  max-width: 42rem;
+  padding-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.legal-doc section h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.legal-doc p {
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.legal-doc a {
+  color: var(--sea-deep);
+  font-weight: 600;
+}
+
+.legal-doc a:hover {
+  text-decoration: underline;
+}
 .demo-pay-block { margin-top: 0.75rem; }
 .demo-pay-warning {
   margin: 0 0 0.65rem;

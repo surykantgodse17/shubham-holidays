@@ -14,6 +14,8 @@ import { Checkout } from "./pages/Checkout";
 import { Confirmation } from "./pages/Confirmation";
 import { Bookings } from "./pages/Bookings";
 import { Contact } from "./pages/Contact";
+import { Privacy } from "./pages/Privacy";
+import { Terms } from "./pages/Terms";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 
 export default function App() {
@@ -34,6 +36,8 @@ export default function App() {
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />
