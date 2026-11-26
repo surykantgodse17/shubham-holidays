@@ -2,8 +2,12 @@
 export const CONTACT_EMAIL = "shubhamholidays01@gmail.com";
 export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
 
+export const CONTACT_PHONE_DISPLAY = "+91 93720 10677";
+export const CONTACT_PHONE_E164 = "919372010677";
+export const CONTACT_TEL = `tel:+${CONTACT_PHONE_E164}`;
+export const CONTACT_WHATSAPP_URL = `https://wa.me/${CONTACT_PHONE_E164}`;
+
 export function whatsappChatUrl(prefill = "Hi Shubham Holidays,"): string {
-  const phone = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
   const q = encodeURIComponent(prefill);
-  return phone ? `https://wa.me/${phone}?text=${q}` : `https://wa.me/?text=${q}`;
+  return `${CONTACT_WHATSAPP_URL}?text=${q}`;
 }

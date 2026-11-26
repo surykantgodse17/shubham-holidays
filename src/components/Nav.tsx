@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { CONTACT_EMAIL, CONTACT_MAILTO, whatsappChatUrl } from "../lib/contact";
+import {
+  CONTACT_EMAIL,
+  CONTACT_MAILTO,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_TEL,
+  whatsappChatUrl,
+} from "../lib/contact";
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -83,6 +89,17 @@ export function Nav() {
                 <path d="M3 7l9 7 9-7" />
               </svg>
               <span className="nav-contact-email">{CONTACT_EMAIL}</span>
+            </a>
+            <a
+              className="nav-contact-link"
+              href={CONTACT_TEL}
+              aria-label={`Call ${CONTACT_PHONE_DISPLAY}`}
+              title={CONTACT_PHONE_DISPLAY}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.8 19.8 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z" />
+              </svg>
+              <span className="nav-contact-phone">{CONTACT_PHONE_DISPLAY}</span>
             </a>
           </div>
           <Link to="/explore" className="btn btn-sea">

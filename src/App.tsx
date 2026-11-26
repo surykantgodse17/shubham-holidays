@@ -14,6 +14,7 @@ import { Checkout } from "./pages/Checkout";
 import { Confirmation } from "./pages/Confirmation";
 import { Bookings } from "./pages/Bookings";
 import { Contact } from "./pages/Contact";
+import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />
+      <FloatingWhatsApp />
     </HashRouter>
   );
 }

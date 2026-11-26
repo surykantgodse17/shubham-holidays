@@ -367,12 +367,10 @@ export const internationalPackages: InternationalPackage[] = [
   },
 ];
 
-/** WhatsApp booking link — set VITE_WHATSAPP_NUMBER (digits with country code) on Vercel. */
+/** WhatsApp booking link for package cards. */
 export function whatsappBookUrl(packageTitle: string, duration: string, price: number): string {
   const text = `Hi Shubham Holidays, I'd like to book: ${packageTitle} (${duration}) — ${formatINR(price)} per person.`;
-  const phone = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
-  const q = encodeURIComponent(text);
-  return phone ? `https://wa.me/${phone}?text=${q}` : `https://wa.me/?text=${q}`;
+  return `https://wa.me/919372010677?text=${encodeURIComponent(text)}`;
 }
 
 export function cityName(code: string): string {

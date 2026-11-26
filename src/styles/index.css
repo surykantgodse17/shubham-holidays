@@ -357,7 +357,8 @@ p {
   border-color: var(--line);
 }
 
-.nav-contact-email {
+.nav-contact-email,
+.nav-contact-phone {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -425,7 +426,8 @@ p {
     border-radius: var(--radius-sm);
   }
   .nav-cta .btn { display: none; }
-  .nav-contact-email { display: none; }
+  .nav-contact-email,
+  .nav-contact-phone { display: none; }
 }
 
 /* Buttons */
@@ -1183,6 +1185,9 @@ p {
 
 .footer-contact {
   min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .footer-contact-title {
@@ -1190,7 +1195,7 @@ p {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--ink);
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.1rem;
 }
 
 .footer-contact-link {
@@ -1199,21 +1204,25 @@ p {
   gap: 0.45rem;
   color: var(--sea-deep);
   font-weight: 600;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .footer-contact-link:hover {
   text-decoration: underline;
 }
 
+.footer-whatsapp {
+  color: #128c7e;
+}
+
 .contact-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.15rem;
   padding-bottom: 2.5rem;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .contact-grid {
     grid-template-columns: 1fr;
   }
@@ -1236,9 +1245,21 @@ p {
   box-shadow: var(--shadow);
 }
 
+.contact-card-static {
+  cursor: default;
+}
+
+.contact-card-static:hover {
+  transform: none;
+}
+
 .contact-card-icon {
   color: var(--sea);
   margin-bottom: 0.25rem;
+}
+
+.contact-card-icon-wa {
+  color: #25d366;
 }
 
 .contact-card h2 {
@@ -1248,8 +1269,41 @@ p {
 .contact-card-value {
   color: var(--sea-deep);
   font-size: 1.02rem;
-  word-break: break-all;
+  word-break: break-word;
   margin: 0.25rem 0 0.35rem;
+}
+
+.contact-card .btn {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+}
+
+.btn-whatsapp-solid {
+  background: #25d366;
+  color: #fff;
+  pointer-events: none;
+}
+
+.floating-whatsapp {
+  position: fixed;
+  right: 1.15rem;
+  bottom: 1.15rem;
+  z-index: 50;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.45);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.floating-whatsapp:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 14px 32px rgba(37, 211, 102, 0.55);
 }
 
 .sample-banner {
