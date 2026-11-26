@@ -13,6 +13,7 @@ import { ExploreDetail } from "./pages/ExploreDetail";
 import { Checkout } from "./pages/Checkout";
 import { Confirmation } from "./pages/Confirmation";
 import { Bookings } from "./pages/Bookings";
+import { Contact } from "./pages/Contact";
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/bookings" element={<Bookings />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />
