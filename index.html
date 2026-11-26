@@ -5,12 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Shubham Holidays — flights, hotels, and curated travel experiences across India and beyond." />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://sdk.minepi.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; connect-src 'self' ws: wss: http://127.0.0.1:5173 http://127.0.0.1:4173 http://localhost:5173 http://localhost:4173 https://sdk.minepi.com https://api.minepi.com https://sandbox-api.minepi.com https://socialchain.app https://*.minepi.com; frame-src https://sdk.minepi.com https://app-cdn.minepi.com https://*.minepi.com; worker-src 'self' blob:;"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="apple-touch-icon" href="/logo.jpg" />
     <title>Shubham Holidays</title>
-    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <!-- Pi SDK is loaded dynamically with SRI from src/lib/pi.ts (avoids init hang outside Pi Browser). -->
   </head>
   <body>
     <div id="root"></div>

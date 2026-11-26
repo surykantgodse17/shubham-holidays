@@ -217,6 +217,37 @@ p {
   margin-bottom: 0.5rem;
 }
 
+.pi-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.45rem;
+}
+
+.pi-status-connecting {
+  border-color: rgba(217, 119, 6, 0.35);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.pi-status-ready {
+  border-color: rgba(26, 107, 92, 0.35);
+  background: rgba(26, 107, 92, 0.08);
+}
+
+.pi-status-sandbox-fallback {
+  border-color: rgba(61, 82, 72, 0.2);
+}
+
+.pi-status-error {
+  border-color: rgba(185, 28, 28, 0.35);
+  background: rgba(185, 28, 28, 0.06);
+}
+
+.pi-status code {
+  font-size: 0.82em;
+}
+
 .btn-pi {
   font-size: 1.02rem;
 }

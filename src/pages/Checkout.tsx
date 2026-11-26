@@ -5,16 +5,15 @@ import { BrandLogo } from "../components/BrandLogo";
 import { Steps } from "../components/Steps";
 import { formatINR } from "../data/mock";
 import {
+  connectPiForCheckout,
   formatPi,
-  inPiBrowser,
-  initPiSdk,
   inrToPi,
   inrToUsd,
   isPiSandbox,
-  isPiSdkAvailable,
   payWithPi,
+  payWithSandboxDemo,
   PI_USD_VALUE,
-  piBridgeBase,
+  type PiConnectionState,
 } from "../lib/pi";
 import {
   addBooking,
@@ -24,23 +23,66 @@ import {
   type CartItem,
 } from "../lib/storage";
 
+function statusLabel(state: PiConnectionState): string {
+  switch (state.status) {
+    case "idle":
+      return "Idle";
+    case "connecting":
+      return "Connecting";
+    case "ready":
+      return "Ready";
+    case "sandbox-fallback":
+      return "Sandbox fallback";
+    case "error":
+      return "Error";
+  }
+}
+
+function statusDetail(state: PiConnectionState): string {
+  switch (state.status) {
+    case "idle":
+      return "Preparing checkout…";
+    case "connecting":
+      return state.detail;
+    case "ready":
+      return state.hasBridge
+        ? `Pi Browser ready${state.sandbox ? " (sandbox)" : ""}. You can pay with Pi.`
+        : `Pi Browser + SDK ready${state.sandbox ? " (sandbox)" : ""}, but no payment bridge is configured — real Pay with Pi needs VITE_PI_BRIDGE_URL. Use sandbox demo only in a normal browser.`;
+    case "sandbox-fallback":
+      return state.reason;
+    case "error":
+      return state.message;
+  }
+}
+
 export function Checkout() {
   const navigate = useNavigate();
   const [cart, setCartState] = useState<CartItem | null>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [piReady, setPiReady] = useState(false);
+  const [conn, setConn] = useState<PiConnectionState>({ status: "idle" });
 
   useEffect(() => {
     setCartState(getCart());
-    setPiReady(initPiSdk() && isPiSdkAvailable());
+    let cancelled = false;
+    (async () => {
+      const next = await connectPiForCheckout((partial) => {
+        if (!cancelled) setConn(partial);
+      });
+      if (!cancelled) setConn(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const amountPi = useMemo(() => (cart ? inrToPi(cart.amount) : 0), [cart]);
   const amountUsd = useMemo(() => (cart ? inrToUsd(cart.amount) : 0), [cart]);
-  const inBrowser = inPiBrowser();
   const sandbox = isPiSandbox();
-  const hasBridge = Boolean(piBridgeBase());
+
+  const canPayWithPi = conn.status === "ready" && conn.hasBridge;
+  const canSandboxDemo = conn.status === "sandbox-fallback" || conn.status === "error";
+  const connecting = conn.status === "connecting" || conn.status === "idle";
 
   if (!cart) {
     return (
@@ -62,50 +104,86 @@ export function Checkout() {
     );
   }
 
-  async function onPay(e: FormEvent) {
+  async function finishBooking(
+    bookingId: string,
+    paymentMethod: string,
+    amountPiPaid: number,
+    paymentId?: string,
+    txid?: string,
+  ) {
+    const guestName = cart!.meta?.guest || cart!.meta?.passenger || "Guest";
+    const email = cart!.meta?.email || "guest@example.com";
+    addBooking({
+      ...cart!,
+      bookingId,
+      createdAt: new Date().toISOString(),
+      guestName,
+      email,
+      paymentMethod,
+      status: "confirmed",
+      meta: {
+        ...cart!.meta,
+        amountPi: String(amountPiPaid),
+        piPaymentId: paymentId || "",
+        piTxid: txid || "",
+      },
+    });
+    clearCart();
+    navigate(`/confirmation?id=${bookingId}`);
+  }
+
+  async function onPayPi(e: FormEvent) {
     e.preventDefault();
     setError("");
+    if (!canPayWithPi) {
+      setError("Pi is not ready for live payment yet. Wait for Ready, or open in Pi Browser with a payment bridge.");
+      return;
+    }
     setProcessing(true);
-
     const bookingId = makeBookingId();
     const memo = `Shubham Holidays · ${cart!.title}`.slice(0, 120);
-
     try {
-      const allowSandboxDemo = !inBrowser || !piReady || !hasBridge;
       const result = await payWithPi({
         amountInr: cart!.amount,
         memo,
         bookingId,
-        allowSandboxDemo,
       });
-
-      const guestName = cart!.meta?.guest || cart!.meta?.passenger || "Guest";
-      const email = cart!.meta?.email || "guest@example.com";
-      addBooking({
-        ...cart!,
+      await finishBooking(
         bookingId,
-        createdAt: new Date().toISOString(),
-        guestName,
-        email,
-        paymentMethod:
-          result.mode === "pi"
-            ? `Pi Network${sandbox ? " (sandbox)" : ""}`
-            : "Pi (sandbox demo)",
-        status: "confirmed",
-        meta: {
-          ...cart!.meta,
-          amountPi: String(result.amountPi),
-          piPaymentId: result.paymentId || "",
-          piTxid: result.txid || "",
-        },
-      });
-      clearCart();
-      navigate(`/confirmation?id=${bookingId}`);
+        `Pi Network${sandbox ? " (sandbox)" : ""}`,
+        result.amountPi,
+        result.paymentId,
+        result.txid,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Pi payment failed.");
     } finally {
       setProcessing(false);
     }
+  }
+
+  async function onSandboxDemo() {
+    setError("");
+    setProcessing(true);
+    const bookingId = makeBookingId();
+    try {
+      const result = await payWithSandboxDemo({
+        amountInr: cart!.amount,
+        bookingId,
+      });
+      await finishBooking(bookingId, "Pi (sandbox demo)", result.amountPi, result.paymentId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sandbox demo failed.");
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  async function onRetryConnect() {
+    setError("");
+    setConn({ status: "connecting", detail: "Retrying…" });
+    const next = await connectPiForCheckout(setConn);
+    setConn(next);
   }
 
   return (
@@ -130,42 +208,66 @@ export function Checkout() {
       </div>
 
       <div className="shell book-layout">
-        <form className="panel" onSubmit={onPay}>
+        <form className="panel" onSubmit={onPayPi}>
           <h2>Pi Network payment</h2>
 
-          <label className="pay-option" style={{ marginBottom: "1rem" }}>
-            <input type="radio" name="pay" checked readOnly />
-            <span>Pay with Pi</span>
-            <span className="badge badge-amber" style={{ marginLeft: "auto" }}>
-              {sandbox ? "Sandbox" : "Mainnet"}
-            </span>
-          </label>
-
-          <div className="pi-status">
-            {inBrowser && piReady ? (
-              <p>
-                Pi Browser detected{hasBridge ? " — live Pi payment flow ready." : " — no payment bridge configured; sandbox demo will complete the booking."}
-              </p>
-            ) : (
-              <p>
-                Outside Pi Browser (or SDK unavailable): use the <strong>sandbox demo</strong> to complete a mock Pi payment. Open in Pi Browser with a payment bridge for the real SDK flow.
-              </p>
+          <div className={`pi-status pi-status-${conn.status}`} role="status" aria-live="polite">
+            <div className="pi-status-row">
+              <span className={`badge ${conn.status === "error" ? "badge-amber" : "badge"}`}>
+                {statusLabel(conn)}
+              </span>
+              {conn.status === "ready" && (
+                <span className="badge badge-sample">{conn.sandbox ? "Sandbox" : "Mainnet"}</span>
+              )}
+              {conn.status === "sandbox-fallback" && (
+                <span className="badge badge-sample">Demo</span>
+              )}
+            </div>
+            <p>{statusDetail(conn)}</p>
+            {(conn.status === "error" || connecting) && (
+              <button type="button" className="btn btn-text" onClick={onRetryConnect} disabled={connecting && conn.status === "connecting"}>
+                {connecting ? "Connecting…" : "Retry connection"}
+              </button>
             )}
           </div>
 
           {error && <p className="error-text">{error}</p>}
           <p className="pay-note">
-            No Pi API secrets are embedded in this client. Server approve/complete uses an optional bridge URL only.
+            No Pi API secrets are in this client. Live Pi payments need Pi Browser plus a server bridge for approve/complete.
           </p>
 
           <button
             type="submit"
             className="btn btn-primary btn-pi"
             style={{ marginTop: "1.15rem", width: "100%" }}
-            disabled={processing}
+            disabled={processing || connecting || !canPayWithPi}
           >
-            {processing ? "Waiting for Pi…" : `Pay ${formatPi(amountPi)}`}
+            {processing && canPayWithPi
+              ? "Waiting for Pi…"
+              : connecting
+                ? "Connecting to Pi SDK…"
+                : canPayWithPi
+                  ? `Pay ${formatPi(amountPi)} with Pi`
+                  : "Pay with Pi (needs Pi Browser + bridge)"}
           </button>
+
+          {canSandboxDemo && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ marginTop: "0.75rem", width: "100%" }}
+              disabled={processing}
+              onClick={onSandboxDemo}
+            >
+              {processing ? "Completing demo…" : `Complete with sandbox demo (${formatPi(amountPi)})`}
+            </button>
+          )}
+
+          {conn.status === "ready" && !conn.hasBridge && (
+            <p className="pay-note" style={{ marginTop: "0.85rem" }}>
+              SDK is connected in Pi Browser. Configure <code>VITE_PI_BRIDGE_URL</code> to enable live Pay with Pi; until then use a normal browser for the sandbox demo button.
+            </p>
+          )}
         </form>
 
         <aside className="panel">
