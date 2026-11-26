@@ -1,14 +1,11 @@
-/** Lightweight abuse protection for public /api routes (no paid upstream). */
+/** Abuse protection — shared SQL rate limits + origin/client checks. */
 
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
+import { sql } from "./db.js";
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 30;
-const MAX_KEYS = 5_000;
-const buckets = new Map();
+const PAY_MAX = 8;
 
 function clientKey(req) {
   const xf = req.headers["x-forwarded-for"];
@@ -22,76 +19,125 @@ function clientKeyFromRequest(request) {
   return "unknown";
 }
 
-function pruneBuckets(now) {
-  for (const [key, bucket] of buckets) {
-    if (now - bucket.start >= WINDOW_MS * 2) buckets.delete(key);
-  }
-  if (buckets.size <= MAX_KEYS) return;
-  const overflow = buckets.size - MAX_KEYS;
-  let removed = 0;
-  for (const key of buckets.keys()) {
-    buckets.delete(key);
-    removed += 1;
-    if (removed >= overflow) break;
-  }
+function authFingerprint(authorization) {
+  const raw = String(authorization || "").trim();
+  if (!raw) return "anon";
+  return crypto.createHash("sha256").update(raw).digest("hex").slice(0, 24);
 }
 
-function takeToken(key) {
-  const now = Date.now();
-  if (buckets.size > MAX_KEYS / 2) pruneBuckets(now);
-  let bucket = buckets.get(key);
-  if (!bucket || now - bucket.start >= WINDOW_MS) {
-    bucket = { start: now, count: 0 };
-    buckets.set(key, bucket);
+/**
+ * Atomic-ish sliding window counter in shared SQL (Postgres on publish, PGlite locally).
+ */
+async function takeSharedToken(bucketKey, max) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - WINDOW_MS);
+  await sql(`delete from rate_limits where window_start < $1`, [windowStart.toISOString()]);
+
+  const rows = await sql(`select hit_count, window_start from rate_limits where bucket_key = $1`, [
+    bucketKey,
+  ]);
+  const row = rows[0];
+  if (!row || new Date(row.window_start).getTime() < windowStart.getTime()) {
+    await sql(
+      `insert into rate_limits (bucket_key, window_start, hit_count) values ($1, $2, 1)
+       on conflict (bucket_key) do update set window_start = excluded.window_start, hit_count = 1`,
+      [bucketKey, now.toISOString()],
+    );
+    return true;
   }
-  bucket.count += 1;
-  return bucket.count <= MAX_PER_WINDOW;
+  const next = Number(row.hit_count) + 1;
+  await sql(`update rate_limits set hit_count = $2 where bucket_key = $1`, [bucketKey, next]);
+  return next <= max;
 }
 
 export function rateLimit(req, res, next) {
-  if (!takeToken(clientKey(req))) {
-    res.status(429).json({
+  takeSharedToken(`search:${clientKey(req)}`, MAX_PER_WINDOW)
+    .then((ok) => {
+      if (!ok) {
+        res.status(429).json({
+          source: "error",
+          message: "Too many requests. Please try again shortly.",
+          flights: [],
+          hotels: [],
+        });
+        return;
+      }
+      next();
+    })
+    .catch(() => {
+      res.status(503).json({
+        source: "error",
+        message: "Search unavailable. Please try again.",
+        flights: [],
+        hotels: [],
+      });
+    });
+}
+
+export async function rateLimitWeb(request) {
+  try {
+    const ok = await takeSharedToken(`search:${clientKeyFromRequest(request)}`, MAX_PER_WINDOW);
+    if (ok) return null;
+    return Response.json(
+      {
+        source: "error",
+        message: "Too many requests. Please try again shortly.",
+        flights: [],
+        hotels: [],
+      },
+      { status: 429 },
+    );
+  } catch {
+    return Response.json(
+      {
+        source: "error",
+        message: "Search unavailable. Please try again.",
+        flights: [],
+        hotels: [],
+      },
+      { status: 503 },
+    );
+  }
+}
+
+function hostMatches(urlString, host) {
+  try {
+    return Boolean(host && new URL(urlString).host === host);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Search/API browser guard:
+ * - Prefer Origin matching this host
+ * - If Origin is absent (some same-origin GETs), require X-Shubham-Client: web + Referer host match
+ */
+export function sameAppOrigin(req, res, next) {
+  const origin = req.headers.origin;
+  const host = req.headers.host;
+  const client = String(req.headers["x-shubham-client"] || "");
+  const referer = req.headers.referer || req.headers.referrer;
+
+  if (origin) {
+    if (hostMatches(origin, host)) {
+      next();
+      return;
+    }
+    res.status(403).json({
       source: "error",
-      message: "Too many requests. Please try again shortly.",
+      message: "Forbidden.",
       flights: [],
       hotels: [],
     });
     return;
   }
-  next();
-}
 
-/** Web-handler rate limit. Returns a Response when limited, otherwise null. */
-export function rateLimitWeb(request) {
-  if (takeToken(clientKeyFromRequest(request))) return null;
-  return Response.json(
-    {
-      source: "error",
-      message: "Too many requests. Please try again shortly.",
-      flights: [],
-      hotels: [],
-    },
-    { status: 429 },
-  );
-}
-
-/** Prefer same-origin browser calls; allow missing Origin on same-host navigations. */
-export function sameAppOrigin(req, res, next) {
-  const origin = req.headers.origin;
-  const host = req.headers.host;
-  if (!origin) {
+  if (client === "web" && referer && hostMatches(String(referer), host)) {
     next();
     return;
   }
-  try {
-    const o = new URL(origin);
-    if (host && o.host === host) {
-      next();
-      return;
-    }
-  } catch {
-    /* fall through */
-  }
+
   res.status(403).json({
     source: "error",
     message: "Forbidden.",
@@ -100,24 +146,22 @@ export function sameAppOrigin(req, res, next) {
   });
 }
 
-/** Web-handler origin check. Returns a Response when forbidden, otherwise null. */
 export function sameAppOriginWeb(request) {
   const origin = request.headers.get("origin");
-  if (!origin) return null;
-  try {
-    const host = request.headers.get("host");
-    const o = new URL(origin);
-    if (host && o.host === host) return null;
-  } catch {
-    /* fall through */
+  const host = request.headers.get("host");
+  const client = request.headers.get("x-shubham-client") || "";
+  const referer = request.headers.get("referer") || request.headers.get("referrer");
+
+  if (origin) {
+    if (hostMatches(origin, host)) return null;
+    return Response.json(
+      { source: "error", message: "Forbidden.", flights: [], hotels: [] },
+      { status: 403 },
+    );
   }
+  if (client === "web" && referer && hostMatches(referer, host)) return null;
   return Response.json(
-    {
-      source: "error",
-      message: "Forbidden.",
-      flights: [],
-      hotels: [],
-    },
+    { source: "error", message: "Forbidden.", flights: [], hotels: [] },
     { status: 403 },
   );
 }
@@ -129,7 +173,6 @@ export function safeApiError(_err) {
   };
 }
 
-/** Production / Sandbox-embed CSP (no Vite inline preamble). */
 export const PI_SANDBOX_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -144,10 +187,6 @@ export const PI_SANDBOX_CSP = [
   "worker-src 'self' blob:",
 ].join("; ");
 
-/**
- * Dev-only CSP: Vite React refresh needs inline/eval scripts and ws:// HMR.
- * Still allows Pi Sandbox iframe ancestors for local embed testing.
- */
 export const PI_DEV_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -162,108 +201,51 @@ export const PI_DEV_CSP = [
   "worker-src 'self' blob:",
 ].join("; ");
 
-/** Payment routes: Origin must be present and match this host (no anonymous curl). */
+/** Payment routes: Origin must match this host. */
 export function requireAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
-  if (!origin || !host) {
+  if (!origin || !hostMatches(origin, host)) {
     res.status(403).json({ ok: false, error: "Forbidden." });
-    return;
-  }
-  try {
-    if (new URL(origin).host === host) {
-      next();
-      return;
-    }
-  } catch {
-    /* fall through */
-  }
-  res.status(403).json({ ok: false, error: "Forbidden." });
-}
-
-export function requireAppOriginWeb(request) {
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (!origin || !host) {
-    return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
-  }
-  try {
-    if (new URL(origin).host === host) return null;
-  } catch {
-    /* fall through */
-  }
-  return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
-}
-
-/**
- * Payment rate limit: IP + Authorization fingerprint, persisted under /tmp so
- * instances on one machine share counters. Order/amount auth is the primary control.
- */
-const PAY_WINDOW_MS = 60_000;
-const PAY_MAX = 8;
-const PAY_STORE = path.join(os.tmpdir(), "shubham-holidays-pay-rate.json");
-
-function authFingerprint(authorization) {
-  const raw = String(authorization || "").trim();
-  if (!raw) return "anon";
-  return crypto.createHash("sha256").update(raw).digest("hex").slice(0, 24);
-}
-
-function readPayStore() {
-  try {
-    const raw = fs.readFileSync(PAY_STORE, "utf8");
-    const data = JSON.parse(raw);
-    return data && typeof data === "object" ? data : {};
-  } catch {
-    return {};
-  }
-}
-
-function writePayStore(data) {
-  try {
-    fs.writeFileSync(PAY_STORE, JSON.stringify(data), "utf8");
-  } catch {
-    /* best-effort on read-only fs */
-  }
-}
-
-function takePayToken(key) {
-  const now = Date.now();
-  const store = readPayStore();
-  for (const k of Object.keys(store)) {
-    if (now - Number(store[k]?.start || 0) >= PAY_WINDOW_MS * 2) delete store[k];
-  }
-  let bucket = store[key];
-  if (!bucket || now - Number(bucket.start) >= PAY_WINDOW_MS) {
-    bucket = { start: now, count: 0 };
-  }
-  bucket.count = Number(bucket.count || 0) + 1;
-  store[key] = bucket;
-  writePayStore(store);
-  return bucket.count <= PAY_MAX;
-}
-
-function payLimitKey(ip, authorization) {
-  return `${ip}|${authFingerprint(authorization)}`;
-}
-
-export function paymentRateLimit(req, res, next) {
-  const key = payLimitKey(clientKey(req), req.headers.authorization);
-  if (!takePayToken(key)) {
-    res.status(429).json({ ok: false, error: "Too many payment requests. Try again shortly." });
     return;
   }
   next();
 }
 
-export function paymentRateLimitWeb(request) {
-  const key = payLimitKey(
-    clientKeyFromRequest(request),
-    request.headers.get("authorization"),
-  );
-  if (takePayToken(key)) return null;
-  return Response.json(
-    { ok: false, error: "Too many payment requests. Try again shortly." },
-    { status: 429 },
-  );
+export function requireAppOriginWeb(request) {
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (!origin || !hostMatches(origin, host)) {
+    return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
+  }
+  return null;
+}
+
+export function paymentRateLimit(req, res, next) {
+  const key = `pay:${clientKey(req)}:${authFingerprint(req.headers.authorization)}`;
+  takeSharedToken(key, PAY_MAX)
+    .then((ok) => {
+      if (!ok) {
+        res.status(429).json({ ok: false, error: "Too many payment requests. Try again shortly." });
+        return;
+      }
+      next();
+    })
+    .catch(() => {
+      res.status(503).json({ ok: false, error: "Payments temporarily unavailable." });
+    });
+}
+
+export async function paymentRateLimitWeb(request) {
+  const key = `pay:${clientKeyFromRequest(request)}:${authFingerprint(request.headers.get("authorization"))}`;
+  try {
+    const ok = await takeSharedToken(key, PAY_MAX);
+    if (ok) return null;
+    return Response.json(
+      { ok: false, error: "Too many payment requests. Try again shortly." },
+      { status: 429 },
+    );
+  } catch {
+    return Response.json({ ok: false, error: "Payments temporarily unavailable." }, { status: 503 });
+  }
 }

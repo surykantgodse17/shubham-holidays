@@ -1,10 +1,11 @@
-/** Canonical demo rate: 1 Pi = exactly 314159 USD */
+/** Pi GCV: exactly 1 Pi = 314159 USD. Pi Amount = USD / 314159 (never market price). */
 export const PI_USD_VALUE = 314159;
+export const PI_GCV_USD = PI_USD_VALUE;
 /** Display string for the rate — always `$314159`, never locale-comma formatted */
 export const PI_USD_RATE_LABEL = `$${PI_USD_VALUE}`;
-/** Exact UI copy requested for checkout / rate display */
+/** Exact UI copy: `1 Pi = $314159` */
 export const PI_USD_RATE_COPY = `1 Pi = ${PI_USD_RATE_LABEL}`;
-/** Demo INR→USD conversion for displaying Pi amounts from INR catalog prices */
+/** Fixed catalog FX for INR inventory → USD (display + client preview only; server re-prices). */
 export const DEMO_INR_PER_USD = 83;
 
 export const PI_SDK_URL = "https://sdk.minepi.com/pi-sdk.js";
@@ -79,10 +80,11 @@ export function inrToUsd(inr: number): number {
   return Math.round((Number(inr) / DEMO_INR_PER_USD) * 100) / 100;
 }
 
+/** GCV: Pi Amount = USD Price / 314159 */
 export function usdToPi(usd: number): number {
-  const cents = Math.round(Number(usd) * 100);
-  if (!Number.isFinite(cents) || cents <= 0) return 0;
-  const scaled = Math.round((cents * 1e7) / (PI_USD_VALUE * 100));
+  const dollars = Number(usd);
+  if (!Number.isFinite(dollars) || dollars <= 0) return 0;
+  const scaled = Math.round((dollars * 1e7) / PI_GCV_USD);
   return scaled / 1e7;
 }
 
@@ -367,14 +369,20 @@ async function postBridge(path: string, body: Record<string, string | number>) {
   return data;
 }
 
-/** Ask the server to price and sign an order (amount comes from the server). */
+/** Ask the server to look up catalog price and sign an order (never send amountInr). */
 async function createServerOrder(opts: {
-  amountInr: number;
+  kind: string;
+  productId: string;
+  guests?: number;
+  nights?: number;
   bookingId: string;
   memo: string;
 }): Promise<{ orderToken: string; amountPi: number; memo: string }> {
   const data = await postBridge("/api/orders", {
-    amountInr: opts.amountInr,
+    kind: opts.kind,
+    productId: opts.productId,
+    guests: opts.guests ?? 1,
+    nights: opts.nights ?? 1,
     bookingId: opts.bookingId,
     memo: opts.memo,
   });
@@ -437,11 +445,14 @@ export async function payWithSandboxDemo(opts: {
 
 /** Real Pi Browser payment. Does not fall back to sandbox demo. */
 export async function payWithPi(opts: {
-  amountInr: number;
+  kind: string;
+  productId: string;
+  guests?: number;
+  nights?: number;
   memo: string;
   bookingId: string;
 }): Promise<PiPaymentResult> {
-  if (!(Number(opts.amountInr) > 0)) throw new Error("Invalid order amount.");
+  if (!opts.kind || !opts.productId) throw new Error("Missing product for checkout.");
 
   if (!inPiBrowser()) {
     throw new Error("Open this app in Pi Browser to pay with Pi.");
@@ -463,9 +474,12 @@ export async function payWithPi(opts: {
     throw new Error("Pi authenticate did not return an access token. Retry Sign in with Pi.");
   }
 
-  // Server prices the order — client must not invent π amount for approval.
+  // Server looks up catalog price — client never supplies amountInr.
   const order = await createServerOrder({
-    amountInr: opts.amountInr,
+    kind: opts.kind,
+    productId: opts.productId,
+    guests: opts.guests,
+    nights: opts.nights,
     bookingId: opts.bookingId,
     memo: opts.memo,
   });

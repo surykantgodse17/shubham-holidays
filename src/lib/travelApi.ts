@@ -46,7 +46,12 @@ function sampleHotelResponse(city: string): HotelSearchResponse {
 }
 
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      "X-Shubham-Client": "web",
+    },
+  });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `Request failed (${res.status})`);

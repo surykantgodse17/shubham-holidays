@@ -150,7 +150,10 @@ export function Checkout() {
     const memo = `Shubham Holidays · ${cart!.title}`.slice(0, 120);
     try {
       const result = await payWithPi({
-        amountInr: cart!.amount,
+        kind: cart!.kind,
+        productId: cart!.id,
+        guests: Number(cart!.meta?.guests || 1),
+        nights: Number(cart!.meta?.nights || 1),
         memo,
         bookingId,
       });
@@ -202,8 +205,9 @@ export function Checkout() {
         <span className="eyebrow">Checkout</span>
         <h1>Pay with Pi</h1>
         <p>
-          Fares are shown in INR and charged in Pi at the demo rate{" "}
+          Fares are shown in INR; Pi is charged at GCV{" "}
           <strong>{formatPiUsdRate()}</strong>
+          {" "}(USD ÷ 314159; not market price)
           {sandbox ? " · Pi sandbox mode" : ""}.
         </p>
         <Steps

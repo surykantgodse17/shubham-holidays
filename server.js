@@ -73,7 +73,10 @@ async function createApp() {
       const order = createOrderTicket({
         uid: caller.uid,
         bookingId: req.body?.bookingId,
-        amountInr: req.body?.amountInr,
+        kind: req.body?.kind,
+        productId: req.body?.productId || req.body?.id,
+        guests: req.body?.guests,
+        nights: req.body?.nights,
         memo: req.body?.memo,
       });
       res.json({ ok: true, ...order });

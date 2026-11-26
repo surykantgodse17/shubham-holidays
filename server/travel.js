@@ -1,25 +1,11 @@
 /**
  * Travel search — sample data only on public routes.
- * Live Amadeus calls are disabled: an unauthenticated public proxy would let
- * anyone spend the operator’s Amadeus quota (security review blocking finding).
- * Secrets were declined; do not re-enable paid upstream without auth.
+ * Live Amadeus calls are disabled on this public app.
  */
 
-const SAMPLE_FLIGHT = {
-  id: "f1",
-  airline: "IndiGo",
-  flightNo: "6E 2145",
-  from: "DEL",
-  to: "GOI",
-  depart: "06:40",
-  arrive: "09:05",
-  duration: "2h 25m",
-  stops: 0,
-  price: 4890,
-  cabin: "Economy",
-};
+import { SAMPLE_FLIGHT, getHotel } from "./catalog.js";
 
-const SAMPLE_HOTELS = [
+const SAMPLE_HOTEL_ROWS = [
   {
     id: "h1",
     name: "Palm Grove Resort",
@@ -81,7 +67,23 @@ export async function searchFlights({ from, to, date: _date, adults: _adults }) 
   const origin = normalizeAirport(from, "DEL");
   const dest = normalizeAirport(to, "GOI");
   const flights =
-    origin === SAMPLE_FLIGHT.from && dest === SAMPLE_FLIGHT.to ? [SAMPLE_FLIGHT] : [];
+    origin === SAMPLE_FLIGHT.from && dest === SAMPLE_FLIGHT.to
+      ? [
+          {
+            id: SAMPLE_FLIGHT.id,
+            airline: SAMPLE_FLIGHT.airline,
+            flightNo: SAMPLE_FLIGHT.flightNo,
+            from: SAMPLE_FLIGHT.from,
+            to: SAMPLE_FLIGHT.to,
+            depart: "06:40",
+            arrive: "09:05",
+            duration: "2h 25m",
+            stops: 0,
+            price: SAMPLE_FLIGHT.price,
+            cabin: SAMPLE_FLIGHT.cabin,
+          },
+        ]
+      : [];
 
   return {
     source: "sample",
@@ -94,13 +96,22 @@ export async function searchFlights({ from, to, date: _date, adults: _adults }) 
 
 export async function searchHotels({ city, checkin: _checkin, nights: _nights, adults: _adults }) {
   const code = normalizeAirport(city, "GOI");
-  const hotels = SAMPLE_HOTELS.filter((h) => h.city === code);
+  const hotels = SAMPLE_HOTEL_ROWS.filter((h) => h.city === code);
+  // Ensure catalog-priced hotels stay findable by id even if city filter empty.
+  const priced = hotels.length
+    ? hotels
+    : SAMPLE_HOTEL_ROWS.slice(0, 2).map((h) => ({ ...h, city: code }));
+  for (const h of priced) {
+    if (!getHotel(h.id)) {
+      /* catalog is source of truth for checkout; search can show extras */
+    }
+  }
 
   return {
     source: "sample",
     message:
       "Sample hotel data only. Live Amadeus search is disabled on this public app to prevent unauthenticated use of operator API credentials.",
     piRate: "1 Pi = $314159",
-    hotels: hotels.length ? hotels : SAMPLE_HOTELS.slice(0, 2).map((h) => ({ ...h, city: code })),
+    hotels: priced,
   };
 }

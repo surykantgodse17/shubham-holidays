@@ -14,7 +14,10 @@ export async function POST(request) {
     const order = createOrderTicket({
       uid: caller.uid,
       bookingId: body.bookingId,
-      amountInr: body.amountInr,
+      kind: body.kind,
+      productId: body.productId || body.id,
+      guests: body.guests,
+      nights: body.nights,
       memo: body.memo,
     });
     return Response.json({ ok: true, ...order });

@@ -1,10 +1,11 @@
 /**
- * Signed server orders for Pi payments (no DB required).
- * HMAC key derived from PI_NETWORK_API_KEY (payments already require it).
+ * Signed server orders — priced only from the server catalog.
+ * USD from catalog → π via GCV (USD / 314159). Never trust client amounts.
  */
 
 import crypto from "node:crypto";
-import { inrToPi } from "./pricing.js";
+import { usdToPi, piAmountsEqual, PI_USD_RATE_COPY } from "./pricing.js";
+import { priceFromCatalog } from "./catalog.js";
 
 const ORDER_TTL_MS = 30 * 60 * 1000;
 
@@ -32,20 +33,13 @@ function fromB64url(str) {
   return Buffer.from(b64, "base64");
 }
 
-export function createOrderTicket({ uid, bookingId, amountInr, memo }) {
+export function createOrderTicket({ uid, bookingId, kind, productId, guests, nights, memo }) {
   const key = signingKey();
   if (!key) {
     const err = new Error(
       "Pi payments are not configured on the server yet. Add PI_NETWORK_API_KEY in app secrets.",
     );
     err.status = 503;
-    throw err;
-  }
-
-  const inr = Number(amountInr);
-  if (!Number.isFinite(inr) || inr <= 0 || inr > 5_000_000) {
-    const err = new Error("Invalid order amount.");
-    err.status = 400;
     throw err;
   }
 
@@ -56,20 +50,30 @@ export function createOrderTicket({ uid, bookingId, amountInr, memo }) {
     throw err;
   }
 
-  const amountPi = inrToPi(inr);
-  if (amountPi <= 0) {
+  // Catalog → USD → GCV π (never client amountInr / market Pi).
+  const priced = priceFromCatalog({ kind, productId, guests, nights });
+  const amountUsd = priced.amountUsd;
+  const amountPi = usdToPi(amountUsd);
+  if (!(amountUsd > 0) || !(amountPi > 0)) {
     const err = new Error("Invalid Pi amount for this order.");
     err.status = 400;
     throw err;
   }
 
   const payload = {
-    v: 1,
+    v: 3,
     uid: String(uid),
     bookingId: bid,
-    amountInr: Math.round(inr * 100) / 100,
+    kind: priced.kind,
+    productId: priced.productId,
+    guests: priced.guests,
+    nights: priced.nights,
+    amountInr: priced.amountInr,
+    amountUsd,
     amountPi,
-    memo: String(memo || "Shubham Holidays").slice(0, 120),
+    gcv: PI_USD_RATE_COPY,
+    title: priced.title,
+    memo: String(memo || `Shubham Holidays · ${priced.title}`).slice(0, 120),
     exp: Date.now() + ORDER_TTL_MS,
     jti: crypto.randomBytes(12).toString("hex"),
   };
@@ -79,9 +83,14 @@ export function createOrderTicket({ uid, bookingId, amountInr, memo }) {
   return {
     orderToken: `${body}.${sig}`,
     amountPi: payload.amountPi,
+    amountUsd: payload.amountUsd,
     amountInr: payload.amountInr,
     bookingId: payload.bookingId,
+    kind: payload.kind,
+    productId: payload.productId,
+    title: payload.title,
     memo: payload.memo,
+    gcv: payload.gcv,
     expiresAt: payload.exp,
   };
 }
@@ -121,7 +130,7 @@ export function verifyOrderTicket(orderToken, expectedUid) {
     throw err;
   }
 
-  if (!payload || payload.v !== 1) {
+  if (!payload || payload.v < 2) {
     const err = new Error("Invalid or missing server order.");
     err.status = 400;
     throw err;
@@ -136,5 +145,30 @@ export function verifyOrderTicket(orderToken, expectedUid) {
     err.status = 403;
     throw err;
   }
-  return payload;
+
+  if (!payload.kind || !payload.productId) {
+    const err = new Error("Invalid or missing server order.");
+    err.status = 400;
+    throw err;
+  }
+
+  const priced = priceFromCatalog({
+    kind: payload.kind,
+    productId: payload.productId,
+    guests: payload.guests,
+    nights: payload.nights,
+  });
+  const amountUsd = priced.amountUsd;
+  const amountPi = usdToPi(amountUsd);
+  if (
+    priced.amountInr !== payload.amountInr ||
+    amountUsd !== Number(payload.amountUsd ?? amountUsd) ||
+    !piAmountsEqual(amountPi, payload.amountPi)
+  ) {
+    const err = new Error("Order price no longer matches the catalog. Start checkout again.");
+    err.status = 409;
+    throw err;
+  }
+
+  return { ...payload, amountUsd, amountPi };
 }
