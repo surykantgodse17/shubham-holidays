@@ -11,9 +11,11 @@ export const PI_USD_RATE_COPY = `1 Pi = ${PI_USD_RATE_LABEL}`;
 export const DEMO_INR_PER_USD = 83;
 
 export const PI_SDK_URL = "https://sdk.minepi.com/pi-sdk.js";
-/** sha384 of https://sdk.minepi.com/pi-sdk.js (fetched 2026-11-26; bump if Pi rotates the file) */
-export const PI_SDK_SRI =
-  "sha384-5RHyz+CU5PdxEjV3L+m1ZLXokX+DsqlX8LNHpX/WLfWcBkfRr0qyjPH5SiVquXQx";
+/**
+ * Do not set script.integrity / crossOrigin on the Pi SDK tag.
+ * sdk.minepi.com does not send Access-Control-Allow-Origin, so anonymous
+ * CORS + SRI fails in Pi Browser with “network or SRI mismatch”.
+ */
 
 export type PiPaymentResult = {
   mode: "pi" | "sandbox-demo";
@@ -247,7 +249,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
   });
 }
 
-/** Load Pi SDK with SRI. Safe outside Pi Browser — does not call Pi.init. */
+/** Load Pi SDK (classic script tag, no SRI). Safe outside Pi Browser — does not call Pi.init. */
 export function loadPiSdkScript(): Promise<void> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Pi SDK requires a browser."));
@@ -274,8 +276,7 @@ export function loadPiSdkScript(): Promise<void> {
     const script = document.createElement("script");
     script.src = PI_SDK_URL;
     script.async = true;
-    script.crossOrigin = "anonymous";
-    script.integrity = PI_SDK_SRI;
+    // No crossOrigin / integrity — Pi CDN has no CORS ACAO (SRI would fail).
     script.dataset.piSdk = "1";
 
     const timer = window.setTimeout(() => {
@@ -298,7 +299,7 @@ export function loadPiSdkScript(): Promise<void> {
       scriptPromise = null;
       reject(
         new Error(
-          "Pi SDK failed to load (network or SRI mismatch). Refresh in Pi Browser, or use the local demo (not a real payment).",
+          "Pi SDK failed to load. Check network, refresh in Pi Browser, or use the local demo (not a real payment).",
         ),
       );
     };
