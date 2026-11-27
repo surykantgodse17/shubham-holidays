@@ -377,6 +377,24 @@ export const internationalPackages: InternationalPackage[] = [
       "Cruise Transfer",
     ],
   },
+  {
+    id: "intl-thailand",
+    title: "Thailand",
+    place: "Bangkok · Pattaya",
+    duration: "4N / 5D",
+    price: 49999,
+    image: "https://images.unsplash.com/photo-1528183429752-a97d0bf99b5a?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel",
+      "Breakfast",
+      "Visa on Arrival assist",
+      "Bangkok City Tour",
+      "Coral Island",
+      "Alcazar Show",
+      "Airport Transfers",
+    ],
+  },
 ];
 
 /** WhatsApp booking link for package cards. */
