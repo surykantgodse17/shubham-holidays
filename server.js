@@ -14,6 +14,7 @@ import {
   paymentRateLimit,
   ensureBrowserSession,
   requireBrowserSession,
+  clientKey,
   safeApiError,
   PI_SANDBOX_CSP,
   PI_DEV_CSP,
@@ -123,6 +124,7 @@ async function createApp() {
     try {
       const session = await createCheckoutSession({
         browserId: req.shBrowserId,
+        clientIp: clientKey(req),
         kind: req.body?.kind,
         productId: req.body?.productId || req.body?.id,
         guests: req.body?.guests,

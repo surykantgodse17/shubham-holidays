@@ -1,5 +1,6 @@
 import { createCheckoutSession } from "../../server/checkout.js";
 import {
+  clientKeyFromRequest,
   ensureBrowserSessionWeb,
   paymentRateLimitWeb,
   requireAppOriginWeb,
@@ -19,6 +20,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const session = await createCheckoutSession({
       browserId,
+      clientIp: clientKeyFromRequest(request),
       kind: body.kind,
       productId: body.productId || body.id,
       guests: body.guests,

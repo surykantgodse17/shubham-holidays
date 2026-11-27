@@ -123,9 +123,10 @@ function hostMatches(urlString, host) {
 }
 
 /**
- * Fetch Metadata required — Origin alone is forgeable by non-browser clients.
- * Browsers send Sec-Fetch-Site on fetch/XHR. Only accept same-origin / same-site
- * (reject "none" — non-browser clients can forge Origin + Sec-Fetch-Site: none).
+ * Browser Fetch Metadata — Origin alone is forgeable by non-browser clients.
+ * Require same-origin/same-site Sec-Fetch-Site plus typical XHR/fetch mode/dest.
+ * These checks are CSRF / browser-shaped defenses only — not sole authorization
+ * (payments still need Pi Bearer + order tickets; checkout needs browser cookie).
  */
 function fetchSiteOk(secFetchSite) {
   if (!secFetchSite) return false;
@@ -133,20 +134,32 @@ function fetchSiteOk(secFetchSite) {
   return site === "same-origin" || site === "same-site";
 }
 
-function originAndFetchOk(origin, host, secFetchSite) {
+function fetchModeDestOk(secFetchMode, secFetchDest) {
+  const mode = String(secFetchMode || "").toLowerCase();
+  const dest = String(secFetchDest || "").toLowerCase();
+  // Real browser fetch/XHR to our JSON APIs.
+  if (mode !== "cors" && mode !== "same-origin") return false;
+  if (dest !== "empty") return false;
+  return true;
+}
+
+function originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) {
   if (!origin || !hostMatches(origin, host)) return false;
   if (!fetchSiteOk(secFetchSite)) return false;
+  if (!fetchModeDestOk(secFetchMode, secFetchDest)) return false;
   return true;
 }
 
 /**
- * Search/API browser guard: matching Origin + required same-site Sec-Fetch-Site.
+ * Search/API browser-shaped guard (not sole auth).
  */
 export function sameAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
   const secFetchSite = req.headers["sec-fetch-site"];
-  if (originAndFetchOk(origin, host, secFetchSite)) {
+  const secFetchMode = req.headers["sec-fetch-mode"];
+  const secFetchDest = req.headers["sec-fetch-dest"];
+  if (originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) {
     next();
     return;
   }
@@ -162,7 +175,9 @@ export function sameAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
   const secFetchSite = request.headers.get("sec-fetch-site");
-  if (originAndFetchOk(origin, host, secFetchSite)) return null;
+  const secFetchMode = request.headers.get("sec-fetch-mode");
+  const secFetchDest = request.headers.get("sec-fetch-dest");
+  if (originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) return null;
   return Response.json(
     { source: "error", message: "Forbidden.", flights: [], hotels: [] },
     { status: 403 },
@@ -204,12 +219,14 @@ export const PI_DEV_CSP = [
   "worker-src 'self' blob:",
 ].join("; ");
 
-/** Payment/checkout routes: Origin match + required same-site Sec-Fetch-Site. */
+/** Payment/checkout routes: browser-shaped Fetch Metadata (paired with cookie / Pi auth). */
 export function requireAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
   const secFetchSite = req.headers["sec-fetch-site"];
-  if (!originAndFetchOk(origin, host, secFetchSite)) {
+  const secFetchMode = req.headers["sec-fetch-mode"];
+  const secFetchDest = req.headers["sec-fetch-dest"];
+  if (!originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) {
     res.status(403).json({ ok: false, error: "Forbidden." });
     return;
   }
@@ -220,11 +237,16 @@ export function requireAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
   const secFetchSite = request.headers.get("sec-fetch-site");
-  if (!originAndFetchOk(origin, host, secFetchSite)) {
+  const secFetchMode = request.headers.get("sec-fetch-mode");
+  const secFetchDest = request.headers.get("sec-fetch-dest");
+  if (!originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) {
     return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
   }
   return null;
 }
+
+/** Export for checkout session IP capping. */
+export { clientKey, clientKeyFromRequest };
 
 /**
  * Ensure HttpOnly browser session cookie (binds checkout sessions to this browser).

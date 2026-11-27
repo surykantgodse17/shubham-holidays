@@ -56,8 +56,25 @@ export async function purgeCheckoutSessions() {
 /**
  * Create a locked checkout session from catalog (ignores client amounts).
  */
+async function trimOpenSessions(column, value, keep) {
+  const key = String(value || "").trim();
+  if (!key) return;
+  const col = column === "client_ip" ? "client_ip" : "browser_id";
+  const openRows = await sql(
+    `select id from checkout_sessions
+     where ${col} = $1 and status = 'open'
+     order by created_at asc`,
+    [key],
+  );
+  if (openRows.length >= keep) {
+    const dropIds = openRows.slice(0, openRows.length - (keep - 1)).map((r) => r.id);
+    await sql(`delete from checkout_sessions where id = any($1::text[])`, [dropIds]);
+  }
+}
+
 export async function createCheckoutSession({
   browserId,
+  clientIp,
   kind,
   productId,
   guests,
@@ -83,17 +100,11 @@ export async function createCheckoutSession({
     throw err;
   }
 
-  // Cap open sessions per browser to limit storage under cookie rotation.
-  const openRows = await sql(
-    `select id from checkout_sessions
-     where browser_id = $1 and status = 'open'
-     order by created_at asc`,
-    [bid],
-  );
-  if (openRows.length >= 5) {
-    const dropIds = openRows.slice(0, openRows.length - 4).map((r) => r.id);
-    await sql(`delete from checkout_sessions where id = any($1::text[])`, [dropIds]);
-  }
+  const ip = String(clientIp || "").trim().slice(0, 64) || "unknown";
+
+  // Cap open sessions per browser cookie AND per client IP (cookie rotation alone cannot grow unbounded).
+  await trimOpenSessions("browser_id", bid, 5);
+  await trimOpenSessions("client_ip", ip, 15);
 
   const id = crypto.randomBytes(16).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
@@ -103,11 +114,12 @@ export async function createCheckoutSession({
 
   await sql(
     `insert into checkout_sessions
-      (id, browser_id, kind, product_id, guests, nights, amount_inr, amount_usd, amount_pi, title, memo, booking_id, status, expires_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'open',$13)`,
+      (id, browser_id, client_ip, kind, product_id, guests, nights, amount_inr, amount_usd, amount_pi, title, memo, booking_id, status, expires_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open',$14)`,
     [
       id,
       bid,
+      ip,
       priced.kind,
       priced.productId,
       priced.guests,
