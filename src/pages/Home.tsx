@@ -44,21 +44,30 @@ export function Home() {
         <div
           className="hero-media hero-media-mainnet02"
           role="img"
-          aria-label="Passengers looking out of an airplane window"
+          aria-label="Snow-capped mountain peaks above the clouds"
         />
-        <div className="hero-overlay">
+        <div className="hero-overlay hero-overlay-ref">
           <Nav overHero />
-          <div className="hero-overlay-main shell">
+          <div className="hero-copy shell">
             <img
-              src="/logo-full.png"
+              src="/logo.jpg"
               alt=""
-              className="hero-center-logo"
-              width={120}
-              height={120}
+              className="hero-copy-logo"
+              width={88}
+              height={88}
               decoding="async"
             />
-            <p className="hero-brand-name">SHUBHAM HOLIDAYS</p>
-            <p className="hero-description">{HERO_DESCRIPTION}</p>
+            <h1 className="hero-copy-brand">Shubham Holidays</h1>
+            <p className="hero-copy-lead">Travel that feels considered</p>
+            <p className="hero-copy-desc">{HERO_DESCRIPTION}</p>
+            <div className="hero-actions">
+              <Link to="/flights" className="btn btn-primary">
+                Search flights
+              </Link>
+              <Link to="/explore" className="btn btn-ghost hero-btn-ghost">
+                Browse experiences
+              </Link>
+            </div>
           </div>
         </div>
       </section>
