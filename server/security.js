@@ -41,28 +41,34 @@ function authFingerprint(authorization) {
 }
 
 /**
- * Atomic-ish sliding window counter in shared SQL (Postgres on publish, PGlite locally).
+ * Atomic sliding-window counter (single upsert + RETURNING).
+ * Postgres/PGlite serialize the conflict update so concurrent hits cannot skip the cap.
  */
 async function takeSharedToken(bucketKey, max) {
   const now = new Date();
   const windowStart = new Date(now.getTime() - WINDOW_MS);
-  await sql(`delete from rate_limits where window_start < $1`, [windowStart.toISOString()]);
+  // Best-effort cleanup; not on the critical path for correctness.
+  await sql(`delete from rate_limits where window_start < $1`, [windowStart.toISOString()]).catch(
+    () => {},
+  );
 
-  const rows = await sql(`select hit_count, window_start from rate_limits where bucket_key = $1`, [
-    bucketKey,
-  ]);
-  const row = rows[0];
-  if (!row || new Date(row.window_start).getTime() < windowStart.getTime()) {
-    await sql(
-      `insert into rate_limits (bucket_key, window_start, hit_count) values ($1, $2, 1)
-       on conflict (bucket_key) do update set window_start = excluded.window_start, hit_count = 1`,
-      [bucketKey, now.toISOString()],
-    );
-    return true;
-  }
-  const next = Number(row.hit_count) + 1;
-  await sql(`update rate_limits set hit_count = $2 where bucket_key = $1`, [bucketKey, next]);
-  return next <= max;
+  const rows = await sql(
+    `insert into rate_limits (bucket_key, window_start, hit_count)
+     values ($1, $2, 1)
+     on conflict (bucket_key) do update set
+       hit_count = case
+         when rate_limits.window_start < $3 then 1
+         else rate_limits.hit_count + 1
+       end,
+       window_start = case
+         when rate_limits.window_start < $3 then excluded.window_start
+         else rate_limits.window_start
+       end
+     returning hit_count`,
+    [bucketKey, now.toISOString(), windowStart.toISOString()],
+  );
+  const count = Number(rows[0]?.hit_count || 0);
+  return count > 0 && count <= max;
 }
 
 export function rateLimit(req, res, next) {
@@ -125,10 +131,59 @@ function hostMatches(urlString, host) {
 
 /**
  * Browser Fetch Metadata — forgeable by non-browser HTTP clients.
- * Use only as a CSRF / browser-shaped filter, never as authorization.
- * Real auth: rate limits; checkout/pay require HttpOnly sh_browser cookie;
- * payments also require Pi Bearer + server order tickets.
+ * Defense-in-depth only (browser-shaped filter), never primary CSRF or auth.
+ * Primary CSRF for cookie-bound POSTs: HMAC X-CSRF-Token (see requireCsrf).
+ * Auth: HttpOnly sh_browser + (payments) Pi Bearer + signed order tickets.
  */
+
+function csrfSigningKey() {
+  const material =
+    process.env.PI_NETWORK_API_KEY ||
+    process.env.PI_API_KEY ||
+    process.env.DATABASE_URL ||
+    "shubham-local-csrf";
+  return crypto.createHash("sha256").update(`shubham-csrf-v1:${material}`).digest();
+}
+
+/** HMAC CSRF bound to the HttpOnly browser cookie id (not forgeable via Origin alone). */
+export function issueCsrfToken(browserId) {
+  const id = String(browserId || "").trim();
+  if (!id) return "";
+  return crypto.createHmac("sha256", csrfSigningKey()).update(`csrf:${id}`).digest("hex");
+}
+
+function timingSafeEqualHex(a, b) {
+  const left = String(a || "");
+  const right = String(b || "");
+  if (!left || !right || left.length !== right.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(left, "utf8"), Buffer.from(right, "utf8"));
+  } catch {
+    return false;
+  }
+}
+
+/** Primary CSRF for checkout / orders / payments (paired with requireBrowserSession). */
+export function requireCsrf(req, res, next) {
+  const browserId = readBrowserIdFromCookieHeader(req.headers.cookie) || req.shBrowserId;
+  const presented = String(req.headers["x-csrf-token"] || "").trim();
+  const expected = issueCsrfToken(browserId);
+  if (!browserId || !timingSafeEqualHex(presented, expected)) {
+    res.status(403).json({ ok: false, error: "Forbidden." });
+    return;
+  }
+  next();
+}
+
+export function requireCsrfWeb(request, browserId) {
+  const id = browserId || readBrowserIdFromCookieHeader(request.headers.get("cookie"));
+  const presented = String(request.headers.get("x-csrf-token") || "").trim();
+  const expected = issueCsrfToken(id);
+  if (!id || !timingSafeEqualHex(presented, expected)) {
+    return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
+  }
+  return null;
+}
 function fetchSiteOk(secFetchSite) {
   if (!secFetchSite) return false;
   const site = String(secFetchSite).toLowerCase();
@@ -220,7 +275,7 @@ export const PI_DEV_CSP = [
   "worker-src 'self' blob:",
 ].join("; ");
 
-/** Payment/checkout routes: browser-shaped Fetch Metadata (paired with cookie / Pi auth). */
+/** Payment/checkout routes: secondary browser-shaped filter (CSRF is requireCsrf). */
 export function requireAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;

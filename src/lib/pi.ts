@@ -1,3 +1,5 @@
+import { ensureCsrfToken } from "./csrf";
+
 /** Pi GCV: exactly 1 Pi = 314159 USD. Pi Amount = USD / 314159 (never market price). */
 export const PI_USD_VALUE = 314159;
 export const PI_GCV_USD = PI_USD_VALUE;
@@ -377,12 +379,14 @@ async function postBridge(
   if (!token) {
     throw new Error("Pi sign-in required before payment. Use Sign in with Pi, then pay again.");
   }
+  const csrf = await ensureCsrfToken();
   const res = await fetch(`${base}${path}`, {
     method: "POST",
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "X-CSRF-Token": csrf,
     },
     body: JSON.stringify(body),
   });

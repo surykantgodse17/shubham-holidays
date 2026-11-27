@@ -1,10 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { ensureCsrfToken } from "./lib/csrf";
 import "./styles/index.css";
 
-/** Establish HttpOnly browser session cookie before checkout/payment calls. */
-fetch("/api/session", { credentials: "include", cache: "no-store" }).catch(() => {});
+/** Establish HttpOnly browser cookie + CSRF token before checkout/payment calls. */
+ensureCsrfToken().catch(() => {});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

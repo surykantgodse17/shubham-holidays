@@ -5,6 +5,7 @@ import {
   paymentRateLimitWeb,
   requireAppOriginWeb,
   requireBrowserSessionWeb,
+  requireCsrfWeb,
 } from "../server/security.js";
 
 export async function POST(request) {
@@ -14,6 +15,8 @@ export async function POST(request) {
   if (forbidden) return forbidden;
   const browser = requireBrowserSessionWeb(request);
   if (browser.error) return browser.error;
+  const csrfBlocked = requireCsrfWeb(request, browser.browserId);
+  if (csrfBlocked) return csrfBlocked;
 
   try {
     const caller = await requirePiCaller(request.headers.get("authorization"));

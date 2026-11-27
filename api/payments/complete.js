@@ -4,6 +4,7 @@ import {
   paymentRateLimitWeb,
   requireAppOriginWeb,
   requireBrowserSessionWeb,
+  requireCsrfWeb,
 } from "../../server/security.js";
 
 const COMPLETE_BODY_MAX_BYTES = 8192;
@@ -15,6 +16,8 @@ export async function POST(request) {
   if (forbidden) return forbidden;
   const browser = requireBrowserSessionWeb(request);
   if (browser.error) return browser.error;
+  const csrfBlocked = requireCsrfWeb(request, browser.browserId);
+  if (csrfBlocked) return csrfBlocked;
 
   try {
     const raw = await request.text();

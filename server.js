@@ -15,6 +15,8 @@ import {
   sessionRateLimit,
   ensureBrowserSession,
   requireBrowserSession,
+  requireCsrf,
+  issueCsrfToken,
   clientKey,
   safeApiError,
   PI_SANDBOX_CSP,
@@ -84,16 +86,20 @@ async function createApp() {
     });
   });
 
-  /** Mint HttpOnly browser cookie — rate-limited + same-app origin (not an auth grant). */
+  /** Mint HttpOnly browser cookie + CSRF token — rate-limited + same-app origin (not an auth grant). */
   app.get("/api/session", sessionRateLimit, requireAppOrigin, ensureBrowserSession, (req, res) => {
-    res.json({ ok: true, browser: Boolean(req.shBrowserId) });
+    res.json({
+      ok: true,
+      browser: Boolean(req.shBrowserId),
+      csrf: issueCsrfToken(req.shBrowserId),
+    });
   });
 
-  // Origin/Sec-Fetch are browser CSRF shape only — not authorization.
-  // Search: rate limit + CSRF headers. Checkout/pay: CSRF + existing HttpOnly cookie; pay also needs Pi Bearer.
+  // Search: rate limit + browser-shaped Origin filter.
+  // Checkout/pay: rate limit + Origin filter + HttpOnly cookie + HMAC CSRF; pay also needs Pi Bearer.
   const protect = [rateLimit, sameAppOrigin, ensureBrowserSession];
-  const protectPay = [paymentRateLimit, requireAppOrigin, requireBrowserSession];
-  const protectCheckout = [paymentRateLimit, requireAppOrigin, requireBrowserSession];
+  const protectPay = [paymentRateLimit, requireAppOrigin, requireBrowserSession, requireCsrf];
+  const protectCheckout = [paymentRateLimit, requireAppOrigin, requireBrowserSession, requireCsrf];
 
   async function flightsHandler(req, res) {
     try {

@@ -1,20 +1,24 @@
 import {
   ensureBrowserSessionWeb,
+  issueCsrfToken,
   requireAppOriginWeb,
   sessionRateLimitWeb,
 } from "../server/security.js";
 
-/** Mint HttpOnly sh_browser cookie — not an authorization grant. */
+/** Mint HttpOnly sh_browser cookie + CSRF token — not an authorization grant. */
 export async function GET(request) {
   const limited = await sessionRateLimitWeb(request);
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;
 
-  const { setCookie } = ensureBrowserSessionWeb(request);
+  const { browserId, setCookie } = ensureBrowserSessionWeb(request);
   const headers = { "Content-Type": "application/json" };
   if (setCookie) headers["Set-Cookie"] = setCookie;
-  return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+  return new Response(
+    JSON.stringify({ ok: true, csrf: issueCsrfToken(browserId) }),
+    { status: 200, headers },
+  );
 }
 
 export default async function handler(req, res) {
