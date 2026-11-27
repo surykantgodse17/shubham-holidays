@@ -635,11 +635,14 @@ p {
 }
 
 .hero-copy-logo {
-  width: clamp(4.25rem, 10vw, 5.5rem);
-  height: clamp(4.25rem, 10vw, 5.5rem);
+  width: auto;
+  height: clamp(3.25rem, 9vw, 4.75rem);
+  max-width: min(72vw, 280px);
   object-fit: contain;
+  object-position: left center;
   border-radius: 0.85rem;
   background: rgba(255, 255, 255, 0.96);
+  padding: 0.45rem 0.65rem;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
   margin-bottom: 1.1rem;
 }

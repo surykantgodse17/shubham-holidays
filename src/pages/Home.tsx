@@ -49,11 +49,11 @@ export function Home() {
           <Nav overHero />
           <div className="hero-copy shell">
             <img
-              src="/logo.jpg"
+              src="/logo-full.png"
               alt=""
               className="hero-copy-logo"
-              width={88}
-              height={88}
+              width={160}
+              height={70}
               decoding="async"
             />
             <h1 className="hero-copy-brand">Shubham Holidays</h1>
