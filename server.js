@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { searchFlights, searchHotels, normalizeAirport } from "./server/travel.js";
 import { approvePayment, completePayment, requirePiCaller } from "./server/payments.js";
 import { createOrderTicket } from "./server/orders.js";
+import { sanitizeBookingMeta } from "./server/bookings.js";
 import { createCheckoutSession, consumeCheckoutSession } from "./server/checkout.js";
 import {
   rateLimit,
@@ -181,6 +182,7 @@ async function createApp() {
         req.body?.paymentId,
         req.headers.authorization,
         req.body?.orderToken,
+        req.headers.host || "",
       );
       res.json({ ok: true, data });
     } catch (err) {
@@ -207,8 +209,9 @@ async function createApp() {
           title: req.body?.title,
           subtitle: req.body?.subtitle,
           amountInr: req.body?.amountInr,
-          meta: req.body?.meta,
+          meta: sanitizeBookingMeta(req.body?.meta),
         },
+        req.headers.host || "",
       );
       res.json({ ok: true, data });
     } catch (err) {

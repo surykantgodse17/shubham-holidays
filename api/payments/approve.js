@@ -13,6 +13,7 @@ export async function POST(request) {
       body.paymentId,
       request.headers.get("authorization"),
       body.orderToken,
+      request.headers.get("host") || "",
     );
     return Response.json({ ok: true, data });
   } catch (err) {

@@ -124,12 +124,13 @@ function hostMatches(urlString, host) {
 
 /**
  * Fetch Metadata required — Origin alone is forgeable by non-browser clients.
- * Browsers always send Sec-Fetch-Site on fetch/XHR; require same-origin/same-site/none.
+ * Browsers send Sec-Fetch-Site on fetch/XHR. Only accept same-origin / same-site
+ * (reject "none" — non-browser clients can forge Origin + Sec-Fetch-Site: none).
  */
 function fetchSiteOk(secFetchSite) {
   if (!secFetchSite) return false;
   const site = String(secFetchSite).toLowerCase();
-  return site === "same-origin" || site === "same-site" || site === "none";
+  return site === "same-origin" || site === "same-site";
 }
 
 function originAndFetchOk(origin, host, secFetchSite) {

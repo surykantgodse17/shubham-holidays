@@ -11,16 +11,17 @@ import { piAmountsEqual } from "./pricing.js";
 import { sql } from "./db.js";
 import { saveConfirmedBooking } from "./bookings.js";
 
-function resolvePiApiBase() {
+function resolvePiApiBase(hostHint = "") {
   const explicit = String(process.env.PI_API_BASE || "").trim();
   if (explicit) return explicit.replace(/\/$/, "");
-  const sandbox =
-    String(process.env.PI_SANDBOX || "").trim().toLowerCase() === "true" ||
-    String(process.env.VITE_PI_SANDBOX || "").trim().toLowerCase() === "true";
-  return sandbox ? "https://sandbox-api.minepi.com/v2" : "https://api.minepi.com/v2";
+  const envSandbox = String(process.env.PI_SANDBOX || "").trim().toLowerCase() === "true";
+  const host = String(hostHint || "").toLowerCase();
+  // Testnet 01 Grok host → sandbox API without baking PI_SANDBOX into npm start.
+  const hostSandbox = host.endsWith("apps.grok.bot");
+  return envSandbox || hostSandbox
+    ? "https://sandbox-api.minepi.com/v2"
+    : "https://api.minepi.com/v2";
 }
-
-const PI_API_BASE = resolvePiApiBase();
 
 export function piApiKey() {
   return String(process.env.PI_NETWORK_API_KEY || process.env.PI_API_KEY || "").trim();
@@ -30,7 +31,7 @@ export function paymentsReady() {
   return Boolean(piApiKey());
 }
 
-export async function verifyPiAccessToken(accessToken) {
+export async function verifyPiAccessToken(accessToken, requestHost) {
   const token = String(accessToken || "").trim();
   if (!token) {
     const err = new Error("Pi sign-in required.");
@@ -38,7 +39,8 @@ export async function verifyPiAccessToken(accessToken) {
     throw err;
   }
 
-  const res = await fetch(`${PI_API_BASE}/me`, {
+  const base = resolvePiApiBase(requestHost);
+  const res = await fetch(`${base}/me`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -79,11 +81,11 @@ function extractBearer(authorizationHeader) {
   return match ? match[1].trim() : "";
 }
 
-export async function requirePiCaller(authorizationHeader) {
-  return verifyPiAccessToken(extractBearer(authorizationHeader));
+export async function requirePiCaller(authorizationHeader, requestHost) {
+  return verifyPiAccessToken(extractBearer(authorizationHeader), requestHost);
 }
 
-async function piKeyFetch(path, { method = "GET", body } = {}) {
+async function piKeyFetch(path, { method = "GET", body, host } = {}) {
   const key = piApiKey();
   if (!key) {
     const err = new Error(
@@ -93,7 +95,8 @@ async function piKeyFetch(path, { method = "GET", body } = {}) {
     throw err;
   }
 
-  const res = await fetch(`${PI_API_BASE}${path}`, {
+  const base = resolvePiApiBase(host);
+  const res = await fetch(`${base}${path}`, {
     method,
     headers: {
       Authorization: `Key ${key}`,
@@ -123,8 +126,8 @@ async function piKeyFetch(path, { method = "GET", body } = {}) {
   return data;
 }
 
-async function getPayment(paymentId) {
-  return piKeyFetch(`/payments/${encodeURIComponent(paymentId)}`);
+async function getPayment(paymentId, host) {
+  return piKeyFetch(`/payments/${encodeURIComponent(paymentId)}`, { host });
 }
 
 function paymentUserUid(payment) {
@@ -232,8 +235,8 @@ async function claimOrderTicketForPayment(order, paymentId, phase) {
   }
 }
 
-export async function approvePayment(paymentId, authorizationHeader, orderToken) {
-  const caller = await requirePiCaller(authorizationHeader);
+export async function approvePayment(paymentId, authorizationHeader, orderToken, requestHost) {
+  const caller = await requirePiCaller(authorizationHeader, requestHost);
   const id = String(paymentId || "").trim();
   if (!id) {
     const err = new Error("Missing paymentId.");
@@ -241,12 +244,13 @@ export async function approvePayment(paymentId, authorizationHeader, orderToken)
     throw err;
   }
 
-  const payment = await getPayment(id);
+  const payment = await getPayment(id, requestHost);
   const order = await assertPaymentMatchesOrder(payment, caller, orderToken);
   await claimOrderTicketForPayment(order, id, "approve");
   return piKeyFetch(`/payments/${encodeURIComponent(id)}/approve`, {
     method: "POST",
     body: {},
+    host: requestHost,
   });
 }
 
@@ -256,8 +260,9 @@ export async function completePayment(
   authorizationHeader,
   orderToken,
   bookingDetails = {},
+  requestHost,
 ) {
-  const caller = await requirePiCaller(authorizationHeader);
+  const caller = await requirePiCaller(authorizationHeader, requestHost);
   const id = String(paymentId || "").trim();
   const tx = String(txid || "").trim();
   if (!id || !tx) {
@@ -266,12 +271,13 @@ export async function completePayment(
     throw err;
   }
 
-  const payment = await getPayment(id);
+  const payment = await getPayment(id, requestHost);
   const order = await assertPaymentMatchesOrder(payment, caller, orderToken);
   await claimOrderTicketForPayment(order, id, "complete");
   const piResult = await piKeyFetch(`/payments/${encodeURIComponent(id)}/complete`, {
     method: "POST",
     body: { txid: tx },
+    host: requestHost,
   });
 
   const booking = await saveConfirmedBooking({

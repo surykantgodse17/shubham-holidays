@@ -5,6 +5,44 @@
 import crypto from "node:crypto";
 import { sql } from "./db.js";
 
+/** Cap client-supplied booking meta to avoid unbounded JSON storage. */
+export const BOOKING_META_MAX_BYTES = 2048;
+const META_MAX_KEYS = 24;
+const META_KEY_MAX = 64;
+const META_STRING_MAX = 500;
+
+export function sanitizeBookingMeta(meta) {
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return {};
+  const out = {};
+  let count = 0;
+  for (const [rawKey, value] of Object.entries(meta)) {
+    if (count >= META_MAX_KEYS) break;
+    const key = String(rawKey || "").trim().slice(0, META_KEY_MAX);
+    if (!key) continue;
+    if (value == null) continue;
+    if (typeof value === "string") {
+      out[key] = value.slice(0, META_STRING_MAX);
+      count += 1;
+    } else if (typeof value === "number" && Number.isFinite(value)) {
+      out[key] = value;
+      count += 1;
+    } else if (typeof value === "boolean") {
+      out[key] = value;
+      count += 1;
+    }
+    // Nested objects/arrays intentionally dropped.
+  }
+  let json = JSON.stringify(out);
+  if (json.length <= BOOKING_META_MAX_BYTES) return out;
+  // Drop keys until under the byte cap.
+  const keys = Object.keys(out);
+  while (keys.length && json.length > BOOKING_META_MAX_BYTES) {
+    delete out[keys.pop()];
+    json = JSON.stringify(out);
+  }
+  return out;
+}
+
 export async function saveConfirmedBooking({
   bookingId,
   paymentId,
@@ -33,8 +71,7 @@ export async function saveConfirmedBooking({
     return { id: existing[0].id, bookingId: bid, paymentId: payId, txid: tx, duplicate: true };
   }
 
-  const safeMeta =
-    meta && typeof meta === "object" && !Array.isArray(meta) ? meta : {};
+  const safeMeta = sanitizeBookingMeta(meta);
 
   await sql(
     `insert into bookings
@@ -61,7 +98,7 @@ export async function saveConfirmedBooking({
       Number(order?.guests || 1) || 1,
       Number(order?.nights || 1) || 1,
       String(order?.memo || "").slice(0, 120),
-      "Pi (Mainnet)",
+      "Pi",
       JSON.stringify(safeMeta),
     ],
   );

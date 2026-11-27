@@ -1,5 +1,8 @@
 import { completePayment } from "../../server/payments.js";
+import { BOOKING_META_MAX_BYTES, sanitizeBookingMeta } from "../../server/bookings.js";
 import { paymentRateLimitWeb, requireAppOriginWeb } from "../../server/security.js";
+
+const COMPLETE_BODY_MAX_BYTES = 8192;
 
 export async function POST(request) {
   const limited = await paymentRateLimitWeb(request);
@@ -8,7 +11,16 @@ export async function POST(request) {
   if (forbidden) return forbidden;
 
   try {
-    const body = await request.json().catch(() => ({}));
+    const raw = await request.text();
+    if (raw.length > COMPLETE_BODY_MAX_BYTES) {
+      return Response.json({ ok: false, error: "Request body too large." }, { status: 413 });
+    }
+    const body = raw ? JSON.parse(raw) : {};
+    const meta = sanitizeBookingMeta(body.meta);
+    if (JSON.stringify(meta).length > BOOKING_META_MAX_BYTES) {
+      return Response.json({ ok: false, error: "Booking meta too large." }, { status: 413 });
+    }
+    const host = request.headers.get("host") || "";
     const data = await completePayment(
       body.paymentId,
       body.txid,
@@ -21,14 +33,18 @@ export async function POST(request) {
         title: body.title,
         subtitle: body.subtitle,
         amountInr: body.amountInr,
-        meta: body.meta,
+        meta,
       },
+      host,
     );
     return Response.json({ ok: true, data });
   } catch (err) {
+    if (err instanceof SyntaxError) {
+      return Response.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
+    }
     const status = err?.status || 500;
     const safe =
-      status === 401 || status === 400 || status === 403 || status === 503
+      status === 401 || status === 400 || status === 403 || status === 503 || status === 413
         ? err.message
         : "Payment completion failed.";
     return Response.json({ ok: false, error: safe }, { status });
@@ -42,12 +58,16 @@ export default async function handler(req, res) {
   }
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  const raw = Buffer.concat(chunks).toString("utf8");
+  const raw = Buffer.concat(chunks);
+  if (raw.length > COMPLETE_BODY_MAX_BYTES) {
+    res.status(413).json({ ok: false, error: "Request body too large." });
+    return;
+  }
   const url = `http://${req.headers.host || "localhost"}${req.url}`;
   const request = new Request(url, {
     method: "POST",
     headers: req.headers,
-    body: raw || "{}",
+    body: raw.toString("utf8") || "{}",
   });
   const response = await POST(request);
   const body = await response.text();
