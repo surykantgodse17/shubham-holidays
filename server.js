@@ -83,9 +83,16 @@ async function createApp() {
     });
   });
 
-  const protect = [rateLimit, sameAppOrigin];
-  const protectPay = [paymentRateLimit, requireAppOrigin, ensureBrowserSession];
-  const protectCheckout = [paymentRateLimit, requireAppOrigin, ensureBrowserSession];
+  /** Mint HttpOnly browser cookie on a same-origin navigation/XHR (not an auth grant). */
+  app.get("/api/session", ensureBrowserSession, (req, res) => {
+    res.json({ ok: true, browser: Boolean(req.shBrowserId) });
+  });
+
+  // Origin/Sec-Fetch are browser CSRF shape only — not authorization.
+  // Search: rate limit + CSRF headers. Checkout/pay: CSRF + existing HttpOnly cookie; pay also needs Pi Bearer.
+  const protect = [rateLimit, sameAppOrigin, ensureBrowserSession];
+  const protectPay = [paymentRateLimit, requireAppOrigin, requireBrowserSession];
+  const protectCheckout = [paymentRateLimit, requireAppOrigin, requireBrowserSession];
 
   async function flightsHandler(req, res) {
     try {
@@ -210,7 +217,6 @@ async function createApp() {
           email: req.body?.email,
           title: req.body?.title,
           subtitle: req.body?.subtitle,
-          amountInr: req.body?.amountInr,
           meta: sanitizeBookingMeta(req.body?.meta),
         },
         req.headers.host || "",

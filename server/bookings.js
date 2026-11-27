@@ -53,7 +53,6 @@ export async function saveConfirmedBooking({
   email,
   title,
   subtitle,
-  amountInr,
   meta,
 }) {
   const id = crypto.randomBytes(16).toString("hex");
@@ -92,7 +91,8 @@ export async function saveConfirmedBooking({
       String(subtitle || "").slice(0, 300),
       String(guestName || "Guest").slice(0, 120),
       String(email || "").slice(0, 160),
-      Number(amountInr || order?.amountInr || 0) || 0,
+      // Always persist catalog/order INR — never trust client-supplied amountInr.
+      Number(order?.amountInr || 0) || 0,
       Number(order?.amountUsd || 0) || 0,
       Number(order?.amountPi || 0) || 0,
       Number(order?.guests || 1) || 1,

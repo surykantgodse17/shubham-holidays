@@ -288,9 +288,8 @@ export async function completePayment(
     order,
     guestName: bookingDetails.guestName,
     email: bookingDetails.email,
-    title: bookingDetails.title || order.title,
+    title: order.title,
     subtitle: bookingDetails.subtitle,
-    amountInr: bookingDetails.amountInr,
     meta: {
       ...(bookingDetails.meta && typeof bookingDetails.meta === "object" ? bookingDetails.meta : {}),
       piUsername: caller.username || "",

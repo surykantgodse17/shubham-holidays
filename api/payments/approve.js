@@ -1,11 +1,17 @@
 import { approvePayment } from "../../server/payments.js";
-import { paymentRateLimitWeb, requireAppOriginWeb } from "../../server/security.js";
+import {
+  paymentRateLimitWeb,
+  requireAppOriginWeb,
+  requireBrowserSessionWeb,
+} from "../../server/security.js";
 
 export async function POST(request) {
   const limited = await paymentRateLimitWeb(request);
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;
+  const browser = requireBrowserSessionWeb(request);
+  if (browser.error) return browser.error;
 
   try {
     const body = await request.json().catch(() => ({}));

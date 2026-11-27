@@ -1,9 +1,9 @@
 import { createCheckoutSession } from "../../server/checkout.js";
 import {
   clientKeyFromRequest,
-  ensureBrowserSessionWeb,
   paymentRateLimitWeb,
   requireAppOriginWeb,
+  requireBrowserSessionWeb,
 } from "../../server/security.js";
 
 export async function POST(request) {
@@ -11,15 +11,13 @@ export async function POST(request) {
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;
-
-  const { browserId, setCookie } = ensureBrowserSessionWeb(request);
-  const headers = { "Content-Type": "application/json" };
-  if (setCookie) headers["Set-Cookie"] = setCookie;
+  const browser = requireBrowserSessionWeb(request);
+  if (browser.error) return browser.error;
 
   try {
     const body = await request.json().catch(() => ({}));
     const session = await createCheckoutSession({
-      browserId,
+      browserId: browser.browserId,
       clientIp: clientKeyFromRequest(request),
       kind: body.kind,
       productId: body.productId || body.id,
@@ -28,17 +26,14 @@ export async function POST(request) {
       bookingId: body.bookingId,
       memo: body.memo,
     });
-    return new Response(JSON.stringify({ ok: true, ...session }), {
-      status: 200,
-      headers,
-    });
+    return Response.json({ ok: true, ...session });
   } catch (err) {
     const status = err?.status || 500;
     const safe =
       status === 401 || status === 400 || status === 403 || status === 404 || status === 503
         ? err.message
         : "Could not start checkout.";
-    return new Response(JSON.stringify({ ok: false, error: safe }), { status, headers });
+    return Response.json({ ok: false, error: safe }, { status });
   }
 }
 

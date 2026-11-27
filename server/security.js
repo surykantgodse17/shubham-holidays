@@ -123,10 +123,10 @@ function hostMatches(urlString, host) {
 }
 
 /**
- * Browser Fetch Metadata — Origin alone is forgeable by non-browser clients.
- * Require same-origin/same-site Sec-Fetch-Site plus typical XHR/fetch mode/dest.
- * These checks are CSRF / browser-shaped defenses only — not sole authorization
- * (payments still need Pi Bearer + order tickets; checkout needs browser cookie).
+ * Browser Fetch Metadata — forgeable by non-browser HTTP clients.
+ * Use only as a CSRF / browser-shaped filter, never as authorization.
+ * Real auth: rate limits; checkout/pay require HttpOnly sh_browser cookie;
+ * payments also require Pi Bearer + server order tickets.
  */
 function fetchSiteOk(secFetchSite) {
   if (!secFetchSite) return false;

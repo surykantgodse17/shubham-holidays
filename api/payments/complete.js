@@ -1,6 +1,10 @@
 import { completePayment } from "../../server/payments.js";
 import { BOOKING_META_MAX_BYTES, sanitizeBookingMeta } from "../../server/bookings.js";
-import { paymentRateLimitWeb, requireAppOriginWeb } from "../../server/security.js";
+import {
+  paymentRateLimitWeb,
+  requireAppOriginWeb,
+  requireBrowserSessionWeb,
+} from "../../server/security.js";
 
 const COMPLETE_BODY_MAX_BYTES = 8192;
 
@@ -9,6 +13,8 @@ export async function POST(request) {
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
   if (forbidden) return forbidden;
+  const browser = requireBrowserSessionWeb(request);
+  if (browser.error) return browser.error;
 
   try {
     const raw = await request.text();
@@ -30,9 +36,7 @@ export async function POST(request) {
         bookingId: body.bookingId,
         guestName: body.guestName,
         email: body.email,
-        title: body.title,
         subtitle: body.subtitle,
-        amountInr: body.amountInr,
         meta,
       },
       host,
