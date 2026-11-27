@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server.js",
     "build": "tsc -b && vite build && node scripts/migrate.mjs",
-    "start": "NODE_ENV=production node server.js",
+    "start": "NODE_ENV=production PI_SANDBOX=true node server.js",
     "lint": "oxlint",
     "preview": "vite preview"
   },

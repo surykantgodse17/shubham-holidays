@@ -12,6 +12,7 @@ import {
   initialPiConnectionState,
   inrToPi,
   inrToUsd,
+  isPiSandbox,
   payWithPi,
   payWithSandboxDemo,
   type PiConnectionState,
@@ -47,8 +48,12 @@ function statusDetail(state: PiConnectionState): string {
       return state.detail;
     case "ready":
       return state.hasBridge
-        ? "Pi Browser ready (Mainnet). You can pay with Pi."
-        : "Pi Browser + SDK ready (Mainnet), but the payment bridge did not respond.";
+        ? isPiSandbox()
+          ? "Pi Browser ready (Testnet sandbox). You can pay with Test Pi."
+          : "Pi Browser ready (Mainnet). You can pay with Pi."
+        : isPiSandbox()
+          ? "Pi Browser + SDK ready (Testnet sandbox), but the payment bridge did not respond."
+          : "Pi Browser + SDK ready (Mainnet), but the payment bridge did not respond.";
     case "sandbox-fallback":
       return state.reason;
     case "error":
@@ -223,7 +228,7 @@ export function Checkout() {
 
       <div className="shell book-layout">
         <form className="panel" onSubmit={onPayPi}>
-          <h2>Pi payment (Mainnet)</h2>
+          <h2>{isPiSandbox() ? "Pi payment (Testnet)" : "Pi payment (Mainnet)"}</h2>
 
           <div className={`pi-status pi-status-${conn.status}`} role="status" aria-live="polite">
             <div className="pi-status-row">
@@ -231,7 +236,9 @@ export function Checkout() {
                 {statusLabel(conn)}
               </span>
               {conn.status === "ready" && (
-                <span className="badge badge-sample">Mainnet · Pi</span>
+                <span className="badge badge-sample">
+                  {isPiSandbox() ? "Testnet · Test Pi" : "Mainnet · Pi"}
+                </span>
               )}
               {conn.status === "sandbox-fallback" && (
                 <span className="badge badge-sample">Not a real payment</span>

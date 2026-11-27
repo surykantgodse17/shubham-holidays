@@ -23,10 +23,10 @@ const PORT = Number(process.env.PORT || 5173);
 const isProd = process.env.NODE_ENV === "production";
 
 /** Exact Pi domain ownership key — served as raw bytes, no SPA/CSP wrapping. */
-function readValidationKey() {
+function readValidationKey(filename = "validation-key.txt") {
   const candidates = [
-    path.join(__dirname, "public", "validation-key.txt"),
-    path.join(__dirname, "dist", "validation-key.txt"),
+    path.join(__dirname, "public", filename),
+    path.join(__dirname, "dist", filename),
   ];
   for (const file of candidates) {
     try {
@@ -38,8 +38,12 @@ function readValidationKey() {
   return null;
 }
 
-function sendValidationKey(_req, res) {
-  const body = readValidationKey();
+function sendValidationKey(req, res) {
+  const host = String(req.hostname || req.headers.host || "").toLowerCase();
+  // Testnet 01 (Grok) uses the Staging/sandbox ownership key; Mainnet keeps validation-key.txt.
+  const file =
+    host.endsWith("apps.grok.bot") ? "validation-key.sandbox.txt" : "validation-key.txt";
+  const body = readValidationKey(file) || readValidationKey("validation-key.txt");
   if (!body) {
     res.status(404).type("text/plain").send("missing");
     return;

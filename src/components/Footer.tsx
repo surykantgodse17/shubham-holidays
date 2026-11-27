@@ -20,6 +20,7 @@ export function Footer() {
             height={70}
             decoding="async"
           />
+          <p className="footer-brand-name">Shubham Holidays</p>
           <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
         </div>
         <div className="footer-links">

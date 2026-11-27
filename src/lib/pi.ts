@@ -132,15 +132,39 @@ export function inPiBrowser(): boolean {
   return /PiBrowser/i.test(navigator.userAgent || "");
 }
 
+/**
+ * Pi network mode for SDK init.
+ * Testnet 01 (Grok `*.apps.grok.bot`) always uses sandbox Test Pi.
+ * Mainnet hosts force sandbox off. Otherwise honor `VITE_PI_SANDBOX` (Vercel Mainnet sets false).
+ */
+export function isPiSandbox(): boolean {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.endsWith("apps.grok.bot")) return true;
+    if (
+      host === "shubhamholidays.vercel.app" ||
+      host === "shubham-holidays.com" ||
+      host.endsWith(".shubhamholidays.vercel.app")
+    ) {
+      return false;
+    }
+  }
+  const flag = String(import.meta.env.VITE_PI_SANDBOX || "").trim().toLowerCase();
+  if (flag === "true" || flag === "1") return true;
+  if (flag === "false" || flag === "0") return false;
+  return false;
+}
+
 /** Sync initial checkout state so non–Pi Browser never paints “Connecting…”. */
 export function initialPiConnectionState(): PiConnectionState {
   if (typeof window === "undefined") return { status: "idle" };
   if (!inPiBrowser()) {
     return {
       status: "sandbox-fallback",
-      reason:
-        "Open this app in Pi Browser for Mainnet Pi payments. Here you can only run a local demo — it does not pay or book.",
-      sandbox: false,
+      reason: isPiSandbox()
+        ? "Open this app in Pi Browser to pay with Test Pi (sandbox). Here you can only run a local demo — it does not pay or book."
+        : "Open this app in Pi Browser for Mainnet Pi payments. Here you can only run a local demo — it does not pay or book.",
+      sandbox: isPiSandbox(),
     };
   }
   return { status: "connecting", detail: "Loading Pi SDK…" };
@@ -148,16 +172,6 @@ export function initialPiConnectionState(): PiConnectionState {
 
 export function isPiSdkAvailable(): boolean {
   return typeof window !== "undefined" && Boolean(window.Pi?.createPayment && window.Pi?.init);
-}
-
-/**
- * Pi network mode for SDK init — Production / Mainnet.
- * `sandbox: false` charges real Pi. Set `VITE_PI_SANDBOX=true` only for local Testnet experiments.
- */
-export function isPiSandbox(): boolean {
-  const flag = String(import.meta.env.VITE_PI_SANDBOX || "").trim().toLowerCase();
-  if (flag === "true" || flag === "1") return true;
-  return false;
 }
 
 /**
