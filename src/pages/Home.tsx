@@ -43,7 +43,7 @@ export function Home() {
         <div
           className="hero-media hero-media-mainnet02"
           role="img"
-          aria-label="Snow-capped mountain peaks above the clouds"
+          aria-label="Airplane flying over snow-capped mountain peaks above the clouds"
         />
         <div className="hero-overlay hero-overlay-ref">
           <Nav overHero />
