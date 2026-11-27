@@ -142,7 +142,12 @@ export function inPiBrowser(): boolean {
 export function isPiSandbox(): boolean {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
+    // Testnet 01 (Grok) + Testnet 02 (Vercel) → always sandbox Test Pi.
     if (host.endsWith("apps.grok.bot")) return true;
+    if (host === "shubham-holidays.vercel.app" || host.endsWith(".shubham-holidays.vercel.app")) {
+      return true;
+    }
+    // Mainnet 01 / Mainnet 02 → never sandbox.
     if (
       host === "shubhamholidays.vercel.app" ||
       host === "shubham-holidays.com" ||

@@ -15,9 +15,12 @@ function resolvePiApiBase(hostHint = "") {
   const explicit = String(process.env.PI_API_BASE || "").trim();
   if (explicit) return explicit.replace(/\/$/, "");
   const envSandbox = String(process.env.PI_SANDBOX || "").trim().toLowerCase() === "true";
-  const host = String(hostHint || "").toLowerCase();
-  // Testnet 01 Grok host → sandbox API without baking PI_SANDBOX into npm start.
-  const hostSandbox = host.endsWith("apps.grok.bot");
+  const host = String(hostHint || "").toLowerCase().split(":")[0];
+  // Testnet 01 Grok + Testnet 02 Vercel → sandbox API (Mainnet hosts stay on api.minepi.com).
+  const hostSandbox =
+    host.endsWith("apps.grok.bot") ||
+    host === "shubham-holidays.vercel.app" ||
+    host.endsWith(".shubham-holidays.vercel.app");
   return envSandbox || hostSandbox
     ? "https://sandbox-api.minepi.com/v2"
     : "https://api.minepi.com/v2";
