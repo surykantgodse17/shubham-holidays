@@ -16,7 +16,12 @@ async function mintSession(request) {
   const headers = { "Content-Type": "application/json" };
   if (setCookie) headers["Set-Cookie"] = setCookie;
   return new Response(
-    JSON.stringify({ ok: true, csrf: issueCsrfToken(browserId), browser: true }),
+    JSON.stringify({
+      ok: true,
+      csrf: issueCsrfToken(browserId),
+      browser: true,
+      browserId,
+    }),
     { status: 200, headers },
   );
 }

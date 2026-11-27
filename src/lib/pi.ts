@@ -1,4 +1,4 @@
-import { ensureCsrfToken } from "./csrf";
+import { browserSessionHeaders, clearBrowserSession, ensureCsrfToken } from "./csrf";
 
 /** Pi GCV: exactly 1 Pi = 314159 USD. Pi Amount = USD / 314159 (never market price). */
 export const PI_USD_VALUE = 314159;
@@ -413,24 +413,19 @@ export async function connectPiForCheckout(
   }
 }
 
-async function postBridge(
+async function postBridgeOnce(
   path: string,
   body: Record<string, string | number | Record<string, string> | undefined>,
+  bearer: string,
 ) {
-  const base = piBridgeBase();
-  const token = getPiAccessToken();
-  if (!token) {
-    throw new Error("Pi sign-in required before payment. Use Sign in with Pi, then pay again.");
-  }
-  const csrf = await ensureCsrfToken();
-  const res = await fetch(`${base}${path}`, {
+  await ensureCsrfToken();
+  const res = await fetch(`${piBridgeBase()}${path}`, {
     method: "POST",
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      "X-CSRF-Token": csrf,
-      "X-Requested-With": "ShubhamHolidays",
+      Authorization: `Bearer ${bearer}`,
+      ...browserSessionHeaders(),
     },
     body: JSON.stringify(body),
   });
@@ -446,6 +441,24 @@ async function postBridge(
     data = text ? (JSON.parse(text) as typeof data) : {};
   } catch {
     /* non-JSON */
+  }
+  return { res, data, text };
+}
+
+async function postBridge(
+  path: string,
+  body: Record<string, string | number | Record<string, string> | undefined>,
+) {
+  const token = getPiAccessToken();
+  if (!token) {
+    throw new Error("Pi sign-in required before payment. Use Sign in with Pi, then pay again.");
+  }
+  let { res, data, text } = await postBridgeOnce(path, body, token);
+  // Pi Browser may drop cookies — remint session once and retry.
+  if (!res.ok && /missing browser session/i.test(String(data.error || text))) {
+    clearBrowserSession();
+    await ensureCsrfToken(true);
+    ({ res, data, text } = await postBridgeOnce(path, body, token));
   }
   if (!res.ok) {
     throw new Error(data.error || text.slice(0, 240) || `Pi bridge error (${res.status})`);

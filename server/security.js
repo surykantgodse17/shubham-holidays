@@ -6,7 +6,7 @@ import {
   browserCookieName,
   browserSetCookieHeader,
   issueBrowserId,
-  readBrowserIdFromCookieHeader,
+  readBrowserId,
 } from "./checkout.js";
 
 const WINDOW_MS = 60_000;
@@ -175,7 +175,8 @@ function timingSafeEqualHex(a, b) {
 
 /** Primary CSRF for checkout / orders / payments (paired with requireBrowserSession). */
 export function requireCsrf(req, res, next) {
-  const browserId = readBrowserIdFromCookieHeader(req.headers.cookie) || req.shBrowserId;
+  const browserId =
+    readBrowserId(req.headers.cookie, req.headers["x-browser-id"]) || req.shBrowserId;
   const presented = String(req.headers["x-csrf-token"] || "").trim();
   const expected = issueCsrfToken(browserId);
   if (!browserId || !timingSafeEqualHex(presented, expected)) {
@@ -186,7 +187,9 @@ export function requireCsrf(req, res, next) {
 }
 
 export function requireCsrfWeb(request, browserId) {
-  const id = browserId || readBrowserIdFromCookieHeader(request.headers.get("cookie"));
+  const id =
+    browserId ||
+    readBrowserId(request.headers.get("cookie"), request.headers.get("x-browser-id"));
   const presented = String(request.headers.get("x-csrf-token") || "").trim();
   const expected = issueCsrfToken(id);
   if (!id || !timingSafeEqualHex(presented, expected)) {
@@ -367,11 +370,11 @@ export { clientKey, clientKeyFromRequest };
  * Express middleware — mutates req.shBrowserId.
  */
 export function ensureBrowserSession(req, res, next) {
-  let id = readBrowserIdFromCookieHeader(req.headers.cookie);
+  let id = readBrowserId(req.headers.cookie, req.headers["x-browser-id"]);
   if (!id) {
     id = issueBrowserId();
     const secure = req.secure || String(req.headers["x-forwarded-proto"] || "").includes("https");
-    res.append("Set-Cookie", browserSetCookieHeader(id, { secure }));
+    res.append("Set-Cookie", browserSetCookieHeader(id, { secure: secure || true }));
   }
   req.shBrowserId = id;
   next();
@@ -379,19 +382,17 @@ export function ensureBrowserSession(req, res, next) {
 
 /** For Fetch API handlers: return { browserId, setCookie? }. */
 export function ensureBrowserSessionWeb(request) {
-  let id = readBrowserIdFromCookieHeader(request.headers.get("cookie"));
+  let id = readBrowserId(request.headers.get("cookie"), request.headers.get("x-browser-id"));
   let setCookie = null;
   if (!id) {
     id = issueBrowserId();
-    const url = new URL(request.url);
-    const secure = url.protocol === "https:";
-    setCookie = browserSetCookieHeader(id, { secure });
+    setCookie = browserSetCookieHeader(id, { secure: true });
   }
   return { browserId: id, setCookie };
 }
 
 export function requireBrowserSession(req, res, next) {
-  const id = readBrowserIdFromCookieHeader(req.headers.cookie) || req.shBrowserId;
+  const id = readBrowserId(req.headers.cookie, req.headers["x-browser-id"]) || req.shBrowserId;
   if (!id) {
     res.status(403).json({ ok: false, error: "Missing browser session. Refresh and try again." });
     return;
@@ -401,7 +402,7 @@ export function requireBrowserSession(req, res, next) {
 }
 
 export function requireBrowserSessionWeb(request) {
-  const id = readBrowserIdFromCookieHeader(request.headers.get("cookie"));
+  const id = readBrowserId(request.headers.get("cookie"), request.headers.get("x-browser-id"));
   if (!id) {
     return {
       error: Response.json(

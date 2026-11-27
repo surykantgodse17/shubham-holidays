@@ -118,6 +118,7 @@ async function createApp() {
     res.json({
       ok: true,
       browser: Boolean(req.shBrowserId),
+      browserId: req.shBrowserId,
       csrf: issueCsrfToken(req.shBrowserId),
     });
   }

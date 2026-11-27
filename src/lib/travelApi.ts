@@ -1,5 +1,5 @@
 import { flights as sampleFlights, hotels as sampleHotels, type Flight, type Hotel } from "../data/mock";
-import { ensureCsrfToken } from "./csrf";
+import { browserSessionHeaders, clearBrowserSession, ensureCsrfToken } from "./csrf";
 
 export type TravelSource = "live" | "sample" | "error";
 
@@ -49,18 +49,31 @@ function sampleHotelResponse(city: string): HotelSearchResponse {
 /** POST so browsers always send Origin (required by the API origin guard). */
 async function postJson<T>(url: string, body: Record<string, string | number>): Promise<T> {
   await ensureCsrfToken();
-  const res = await fetch(url, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-Requested-With": "ShubhamHolidays",
-    },
-    body: JSON.stringify(body),
-  });
+  const doFetch = () =>
+    fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...browserSessionHeaders(),
+      },
+      body: JSON.stringify(body),
+    });
+
+  let res = await doFetch();
   if (!res.ok) {
     const text = await res.text();
+    if (/missing browser session/i.test(text)) {
+      clearBrowserSession();
+      await ensureCsrfToken(true);
+      res = await doFetch();
+      if (!res.ok) {
+        const retryText = await res.text();
+        throw new Error(retryText || `Request failed (${res.status})`);
+      }
+      return res.json() as Promise<T>;
+    }
     throw new Error(text || `Request failed (${res.status})`);
   }
   return res.json() as Promise<T>;

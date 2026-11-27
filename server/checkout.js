@@ -26,19 +26,39 @@ export function readBrowserIdFromCookieHeader(cookieHeader) {
   }
 }
 
+/** Accept only server-shaped ids (48 hex chars from issueBrowserId). */
+export function normalizeBrowserId(value) {
+  const id = String(value || "").trim();
+  if (/^[a-f0-9]{48}$/i.test(id)) return id.toLowerCase();
+  return "";
+}
+
+/**
+ * Cookie first; Pi Browser often drops Set-Cookie on fetch, so clients may
+ * resend the minted id as X-Browser-Id (still bound by HMAC CSRF).
+ */
+export function readBrowserId(cookieHeader, headerBrowserId) {
+  return (
+    normalizeBrowserId(readBrowserIdFromCookieHeader(cookieHeader)) ||
+    normalizeBrowserId(headerBrowserId)
+  );
+}
+
 export function issueBrowserId() {
   return crypto.randomBytes(24).toString("hex");
 }
 
 export function browserSetCookieHeader(browserId, { secure }) {
+  // SameSite=None so Pi Browser / iframe / WebView keeps the cookie on fetch.
   const parts = [
     `${BROWSER_COOKIE}=${encodeURIComponent(browserId)}`,
     "Path=/",
     "HttpOnly",
-    "SameSite=Lax",
+    "SameSite=None",
     "Max-Age=86400",
   ];
-  if (secure) parts.push("Secure");
+  // Secure required with SameSite=None; always set on HTTPS (Vercel / Pi).
+  if (secure !== false) parts.push("Secure");
   return parts.join("; ");
 }
 
