@@ -22,7 +22,7 @@ export function Hotels() {
       <div className="shell page-hero">
         <span className="eyebrow">Hotels</span>
         <h1>Find a stay</h1>
-        <p>Browse sample hotels by city, then select a room rate and continue to booking.</p>
+        <p>Search stays by city, pick a room rate, then continue to booking and Pi payment.</p>
         <Steps
           items={[
             { label: "Search", state: "active" },
@@ -74,10 +74,6 @@ export function Hotels() {
               Search hotels
             </button>
           </div>
-          <p className="sample-banner">
-            <span className="badge badge-sample">Sample data</span>
-            Sample cities: Goa, Mumbai, Bengaluru, Delhi.
-          </p>
         </form>
       </div>
     </div>

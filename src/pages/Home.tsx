@@ -189,10 +189,6 @@ export function Home() {
             </div>
           )}
 
-          <p className="sample-banner">
-            <span className="badge badge-sample">Sample data</span>
-            Demo inventory — no live airline or hotel APIs.
-          </p>
         </form>
       </section>
 

@@ -71,12 +71,12 @@ export function HotelResults() {
           {checkin ? `Check-in ${checkin}` : "Flexible"} · {nights} night{nights === "1" ? "" : "s"} · {guests}{" "}
           guest{guests === "1" ? "" : "s"} · {formatPiUsdRate()}
         </p>
-        <p className="sample-banner mt-065">
-          <span className={`badge ${source === "live" ? "badge" : "badge-sample"}`}>
-            {source === "live" ? "Live" : source === "sample" ? "Sample data" : "Error"}
-          </span>
-          {message}
-        </p>
+        {source === "error" && message ? (
+          <p className="sample-banner mt-065">
+            <span className="badge badge-sample">Error</span>
+            {message}
+          </p>
+        ) : null}
         <Steps
           items={[
             { label: "Search", state: "done" },

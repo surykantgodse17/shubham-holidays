@@ -21,7 +21,7 @@ export function Flights() {
       <div className="shell page-hero">
         <span className="eyebrow">Flights</span>
         <h1>Find your flight</h1>
-        <p>Sample IndiGo Delhi → Goa inventory (public demo; rate-limited search API).</p>
+        <p>Search routes, pick a flight, then continue to booking and Pi payment.</p>
         <Steps
           items={[
             { label: "Search", state: "active" },
@@ -73,10 +73,6 @@ export function Flights() {
               Search flights
             </button>
           </div>
-          <p className="sample-banner">
-            <span className="badge badge-sample">Sample data</span>
-            Sample route: Delhi (DEL) → Goa (GOI) · IndiGo 6E 2145.
-          </p>
         </form>
       </div>
     </div>
