@@ -63,8 +63,8 @@ export function Home() {
               <Link to="/flights" className="btn btn-primary">
                 Search flights
               </Link>
-              <Link to="/explore" className="btn btn-ghost hero-btn-ghost">
-                Browse experiences
+              <Link to="/hotels" className="btn btn-ghost hero-btn-ghost">
+                Search hotel
               </Link>
             </div>
           </div>
