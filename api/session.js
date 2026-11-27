@@ -1,7 +1,16 @@
-import { ensureBrowserSessionWeb } from "../server/security.js";
+import {
+  ensureBrowserSessionWeb,
+  requireAppOriginWeb,
+  sessionRateLimitWeb,
+} from "../server/security.js";
 
 /** Mint HttpOnly sh_browser cookie — not an authorization grant. */
 export async function GET(request) {
+  const limited = await sessionRateLimitWeb(request);
+  if (limited) return limited;
+  const forbidden = requireAppOriginWeb(request);
+  if (forbidden) return forbidden;
+
   const { setCookie } = ensureBrowserSessionWeb(request);
   const headers = { "Content-Type": "application/json" };
   if (setCookie) headers["Set-Cookie"] = setCookie;
@@ -18,5 +27,6 @@ export default async function handler(req, res) {
   const response = await GET(request);
   const setCookie = response.headers.get("Set-Cookie");
   if (setCookie) res.setHeader("Set-Cookie", setCookie);
-  res.status(200).json({ ok: true });
+  const body = await response.json().catch(() => ({ ok: false }));
+  res.status(response.status).json(body);
 }

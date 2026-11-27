@@ -12,6 +12,7 @@ import {
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 30;
 const PAY_MAX = 8;
+const SESSION_MAX = 12;
 
 function clientKey(req) {
   // Prefer Express req.ip when trust proxy is set (ignores spoofed multi-hop XFF alone).
@@ -297,6 +298,34 @@ export function requireBrowserSessionWeb(request) {
     };
   }
   return { browserId: id };
+}
+
+/** Cap anonymous /api/session cookie minting (not an auth grant). */
+export function sessionRateLimit(req, res, next) {
+  takeSharedToken(`session:${clientKey(req)}`, SESSION_MAX)
+    .then((ok) => {
+      if (!ok) {
+        res.status(429).json({ ok: false, error: "Too many requests. Please try again shortly." });
+        return;
+      }
+      next();
+    })
+    .catch(() => {
+      res.status(503).json({ ok: false, error: "Session unavailable. Please try again." });
+    });
+}
+
+export async function sessionRateLimitWeb(request) {
+  try {
+    const ok = await takeSharedToken(`session:${clientKeyFromRequest(request)}`, SESSION_MAX);
+    if (ok) return null;
+    return Response.json(
+      { ok: false, error: "Too many requests. Please try again shortly." },
+      { status: 429 },
+    );
+  } catch {
+    return Response.json({ ok: false, error: "Session unavailable. Please try again." }, { status: 503 });
+  }
 }
 
 export function paymentRateLimit(req, res, next) {

@@ -12,6 +12,7 @@ import {
   sameAppOrigin,
   requireAppOrigin,
   paymentRateLimit,
+  sessionRateLimit,
   ensureBrowserSession,
   requireBrowserSession,
   clientKey,
@@ -83,8 +84,8 @@ async function createApp() {
     });
   });
 
-  /** Mint HttpOnly browser cookie on a same-origin navigation/XHR (not an auth grant). */
-  app.get("/api/session", ensureBrowserSession, (req, res) => {
+  /** Mint HttpOnly browser cookie — rate-limited + same-app origin (not an auth grant). */
+  app.get("/api/session", sessionRateLimit, requireAppOrigin, ensureBrowserSession, (req, res) => {
     res.json({ ok: true, browser: Boolean(req.shBrowserId) });
   });
 
