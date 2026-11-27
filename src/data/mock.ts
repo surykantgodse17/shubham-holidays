@@ -214,6 +214,18 @@ export const listings: Listing[] = [
     description: "Forts by day, courtyard dinners by night — classic Rajasthan without the rush.",
   },
   {
+    id: "l7",
+    title: "Indian Pilgrimage Circuit",
+    type: "Package",
+    place: "Varanasi · Tirupati · Shirdi · Somnath",
+    duration: "6 nights",
+    price: 35900,
+    image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80",
+    highlights: ["Temple darshan", "Puja arrangements", "AC hotels", "Local transfers"],
+    description:
+      "Sacred circuit across India’s beloved shrines — calm travel, guided darshan, and comfortable stays.",
+  },
+  {
     id: "l5",
     title: "Andaman Reef Snorkel",
     type: "Experience",
