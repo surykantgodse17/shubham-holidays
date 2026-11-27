@@ -152,13 +152,28 @@ p {
 }
 
 .site-brand {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.55rem, 5vw, 2.6rem);
-  letter-spacing: -0.04em;
-  line-height: 1.02;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
   color: var(--sea-deep);
   flex-shrink: 1;
+  min-width: 0;
+}
+
+.site-brand-logo {
+  display: block;
+  width: clamp(2.5rem, 8vw, 3.5rem);
+  height: clamp(2.5rem, 8vw, 3.5rem);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.site-brand-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.35rem, 4.5vw, 2.4rem);
+  letter-spacing: -0.04em;
+  line-height: 1.02;
   text-transform: uppercase;
   text-wrap: balance;
 }

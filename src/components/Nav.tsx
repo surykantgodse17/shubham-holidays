@@ -22,7 +22,15 @@ export function Nav({ belowHero = false }: NavProps) {
       <div className="nav-stack">
         <div className="nav-brand-row">
           <Link to="/" className="site-brand" onClick={() => setOpen(false)}>
-            SHUBHAM HOLIDAYS
+            <img
+              src="/logo-full.png"
+              alt=""
+              className="site-brand-logo"
+              width={56}
+              height={56}
+              decoding="async"
+            />
+            <span className="site-brand-text">SHUBHAM HOLIDAYS</span>
           </Link>
           <button
             className="menu-btn"

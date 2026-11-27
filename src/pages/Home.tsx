@@ -42,21 +42,6 @@ export function Home() {
 
       <Nav belowHero />
 
-      <section className="hero-intro shell">
-        <h1 className="hero-headline">Travel that feels considered</h1>
-        <p className="hero-sub">
-          Search flights and stays, then book curated packages and local experiences — all in one calm flow.
-        </p>
-        <div className="hero-actions">
-          <Link to="/flights" className="btn btn-primary">
-            Search flights
-          </Link>
-          <Link to="/explore" className="btn btn-ghost">
-            Browse experiences
-          </Link>
-        </div>
-      </section>
-
       <section className="section shell">
         <form className="search-panel" onSubmit={onSearch}>
           <div className="search-tabs" role="tablist" aria-label="Search type">
