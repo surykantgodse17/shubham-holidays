@@ -1,12 +1,20 @@
 import { searchHotels, normalizeAirport } from "../server/travel.js";
 import { BODY_MAX_SEARCH, readNodeBodyLimited, readWebBodyLimited } from "../server/httpBody.js";
-import { rateLimitWeb, sameAppOriginWeb, safeApiError } from "../server/security.js";
+import {
+  rateLimitWeb,
+  requireBrowserSessionWeb,
+  sameAppOriginWeb,
+  safeApiError,
+} from "../server/security.js";
 
 async function handleSearch(request) {
+  // Primary: shared rate limit + HttpOnly browser cookie. Origin/Sec-Fetch/X-Requested-With are secondary only.
   const limited = await rateLimitWeb(request);
   if (limited) return limited;
   const forbidden = sameAppOriginWeb(request);
   if (forbidden) return forbidden;
+  const browser = requireBrowserSessionWeb(request);
+  if (browser.error) return browser.error;
 
   try {
     const url = new URL(request.url);

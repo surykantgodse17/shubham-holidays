@@ -122,9 +122,9 @@ async function createApp() {
     });
   });
 
-  // Search: rate limit + browser-shaped Origin filter.
-  // Checkout/pay: rate limit + Origin filter + HttpOnly cookie + HMAC CSRF; pay also needs Pi Bearer.
-  const protect = [rateLimit, sameAppOrigin, ensureBrowserSession];
+  // Search: rate limit + HttpOnly cookie (Origin/Sec-Fetch secondary only).
+  // Checkout/pay: rate limit + cookie + HMAC CSRF; pay also needs Pi Bearer.
+  const protect = [rateLimit, sameAppOrigin, requireBrowserSession];
   const protectPay = [paymentRateLimit, requireAppOrigin, requireBrowserSession, requireCsrf];
   const protectCheckout = [paymentRateLimit, requireAppOrigin, requireBrowserSession, requireCsrf];
 

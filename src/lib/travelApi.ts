@@ -1,4 +1,5 @@
 import { flights as sampleFlights, hotels as sampleHotels, type Flight, type Hotel } from "../data/mock";
+import { ensureCsrfToken } from "./csrf";
 
 export type TravelSource = "live" | "sample" | "error";
 
@@ -47,8 +48,10 @@ function sampleHotelResponse(city: string): HotelSearchResponse {
 
 /** POST so browsers always send Origin (required by the API origin guard). */
 async function postJson<T>(url: string, body: Record<string, string | number>): Promise<T> {
+  await ensureCsrfToken();
   const res = await fetch(url, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",

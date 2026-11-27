@@ -217,9 +217,10 @@ function originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest
 }
 
 /**
- * Search/session browser-shaped guard (secondary only).
- * Primary controls: rate limits; checkout/pay also use HttpOnly cookie + HMAC CSRF.
- * Requires X-Requested-With so naive cross-site form posts cannot call these APIs.
+ * Secondary browser-shaped filter only (headers are forgeable by non-browser clients).
+ * Do not treat this as authorization.
+ * Primary controls: rate limits; search also requires HttpOnly sh_browser;
+ * checkout/pay require cookie + HMAC CSRF (+ Pi Bearer on pay).
  */
 const APP_FETCH_HEADER = "shubhamholidays";
 

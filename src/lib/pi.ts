@@ -182,11 +182,11 @@ export function isPiSdkAvailable(): boolean {
 }
 
 /**
- * Optional absolute bridge URL for approve/complete (no secrets in the client).
- * Empty = same-origin `/api/payments/*` (local Express or published api handlers).
+ * Payment bridge is always same-origin `/api/*`.
+ * Ignore any absolute VITE_PI_BRIDGE_URL so Pi Bearer tokens never leave this origin.
  */
 export function piBridgeBase(): string {
-  return String(import.meta.env.VITE_PI_BRIDGE_URL || "").replace(/\/$/, "");
+  return "";
 }
 
 /** True when payments can call a bridge (same-origin by default). */
