@@ -288,7 +288,9 @@ export function Checkout() {
               : isConnecting
                 ? "Checking Pi Browser…"
                 : canPayWithPi
-                  ? `Pay with Test Pi (${formatPi(amountPi)})`
+                  ? isPiSandbox()
+                    ? `Pay with Test Pi (${formatPi(amountPi)})`
+                    : `Pay with Pi (${formatPi(amountPi)})`
                   : isPiSandbox()
                     ? "Pay with Test Pi (open in Pi Browser)"
                     : "Pay with Pi (open in Pi Browser)"}
