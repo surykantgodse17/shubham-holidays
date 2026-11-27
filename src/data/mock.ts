@@ -226,6 +226,39 @@ export const listings: Listing[] = [
       "Sacred circuit across India’s beloved shrines — calm travel, guided darshan, and comfortable stays.",
   },
   {
+    id: "l8",
+    title: "Goa Beach Escape",
+    type: "Package",
+    place: "North Goa · South Goa",
+    duration: "3 nights",
+    price: 18900,
+    image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=80",
+    highlights: ["Beach resort", "Breakfast", "Airport transfers", "Water sports option"],
+    description: "Sun, sand, and slow evenings — a short coastal reset with resort stays and easy transfers.",
+  },
+  {
+    id: "l9",
+    title: "Kashmir Valley Retreat",
+    type: "Package",
+    place: "Srinagar · Gulmarg · Pahalgam",
+    duration: "5 nights",
+    price: 39900,
+    image: "https://images.unsplash.com/photo-1566837497312-7be7830ae9b1?auto=format&fit=crop&w=1200&q=80",
+    highlights: ["Shikara ride", "Gulmarg gondola", "Houseboat night", "Local guide"],
+    description: "Dal Lake mornings, pine valleys, and mountain air — Kashmir at an easy pace.",
+  },
+  {
+    id: "l10",
+    title: "Andaman Island Getaway",
+    type: "Package",
+    place: "Port Blair · Havelock",
+    duration: "4 nights",
+    price: 45900,
+    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
+    highlights: ["Ferry tickets", "Beach hotel", "Snorkel session", "Cellular Jail visit"],
+    description: "Turquoise water, soft sand, and island hopping — Andaman without the planning stress.",
+  },
+  {
     id: "l5",
     title: "Andaman Reef Snorkel",
     type: "Experience",
@@ -270,7 +303,7 @@ export const destinations = [
   },
 ];
 
-/** Domestic packages shown on the homepage (India). */
+/** Domestic packages on the homepage — add/remove Package listings freely (no fixed count). */
 export const domesticPackages = listings.filter((l) => l.type === "Package");
 
 export type InternationalPackage = {
@@ -283,6 +316,7 @@ export type InternationalPackage = {
   inclusions: string[];
 };
 
+/** International tours on the homepage — add/remove entries freely (no fixed count). */
 export const internationalPackages: InternationalPackage[] = [
   {
     id: "intl-dubai",
@@ -338,6 +372,57 @@ export const internationalPackages: InternationalPackage[] = [
       "Genting Highlands",
       "Batu Caves",
       "Sunway Lagoon",
+    ],
+  },
+  {
+    id: "intl-thailand",
+    title: "Thailand",
+    place: "Bangkok · Pattaya",
+    duration: "4N / 5D",
+    price: 49999,
+    image: "https://images.unsplash.com/photo-1528183429752-a97d0bf99b5a?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel",
+      "Breakfast",
+      "Visa on Arrival assist",
+      "Bangkok City Tour",
+      "Coral Island",
+      "Alcazar Show",
+      "Airport Transfers",
+    ],
+  },
+  {
+    id: "intl-maldives",
+    title: "Maldives",
+    place: "Male · Island Resort",
+    duration: "3N / 4D",
+    price: 89999,
+    image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "Resort stay",
+      "Breakfast & dinner",
+      "Speedboat / seaplane transfer",
+      "Snorkel session",
+      "Beach villa / room",
+    ],
+  },
+  {
+    id: "intl-vietnam",
+    title: "Vietnam",
+    place: "Hanoi · Halong · Da Nang",
+    duration: "5N / 6D",
+    price: 59999,
+    image: "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1000&q=80",
+    inclusions: [
+      "Flight",
+      "4-Star Hotel",
+      "Breakfast",
+      "Visa assist",
+      "Halong Bay cruise",
+      "Hanoi city tour",
+      "Airport Transfers",
     ],
   },
 ];
