@@ -37,32 +37,21 @@ export function Home() {
     <div className="page">
       <section className="hero" aria-label="Shubham Holidays hero">
         <div className="hero-media" role="img" aria-label="Beach resort hotel with airplane flying over the ocean" />
-        <div className="hero-content">
-          <div className="hero-brand-row">
-            <div className="hero-logo-frame">
-              <img
-                src="/logo-full.png"
-                alt="Shubham Holidays"
-                className="hero-logo"
-                width={280}
-                height={123}
-                decoding="async"
-              />
-            </div>
-            <p className="hero-brand">Shubham Holidays</p>
-          </div>
-          <h1 className="hero-headline">Travel that feels considered</h1>
-          <p className="hero-sub">
-            Search flights and stays, then book curated packages and local experiences — all in one calm flow.
-          </p>
-          <div className="hero-actions">
-            <Link to="/flights" className="btn btn-primary">
-              Search flights
-            </Link>
-            <Link to="/explore" className="btn btn-ghost hero-ghost-on-photo">
-              Browse experiences
-            </Link>
-          </div>
+      </section>
+
+      <section className="hero-intro shell" aria-label="Brand">
+        <p className="hero-brand">Shubham Holidays</p>
+        <h1 className="hero-headline">Travel that feels considered</h1>
+        <p className="hero-sub">
+          Search flights and stays, then book curated packages and local experiences — all in one calm flow.
+        </p>
+        <div className="hero-actions">
+          <Link to="/flights" className="btn btn-primary">
+            Search flights
+          </Link>
+          <Link to="/explore" className="btn btn-ghost">
+            Browse experiences
+          </Link>
         </div>
       </section>
 

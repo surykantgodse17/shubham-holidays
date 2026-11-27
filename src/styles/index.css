@@ -460,12 +460,10 @@ p {
 
 .btn-text:hover { color: var(--sea-deep); }
 
-/* Hero — full bleed, one composition */
+/* Hero — full-bleed photo only; brand name sits below the image */
 .hero {
   position: relative;
   min-height: calc(100svh - var(--nav-h));
-  display: grid;
-  align-items: end;
   overflow: hidden;
   isolation: isolate;
 }
@@ -473,7 +471,6 @@ p {
 .hero-media {
   position: absolute;
   inset: 0;
-  z-index: -2;
   background:
     url("/hero-testnet01.jpg") center / cover no-repeat;
   transform: scale(1.04);
@@ -487,16 +484,9 @@ p {
   background:
     linear-gradient(
       180deg,
-      rgba(8, 18, 24, 0.55) 0%,
-      rgba(8, 18, 24, 0.35) 35%,
-      rgba(8, 18, 24, 0.72) 70%,
-      rgba(8, 18, 24, 0.88) 100%
-    ),
-    linear-gradient(
-      90deg,
-      rgba(8, 18, 24, 0.45) 0%,
-      rgba(8, 18, 24, 0.15) 50%,
-      rgba(8, 18, 24, 0.4) 100%
+      rgba(8, 18, 24, 0.2) 0%,
+      rgba(8, 18, 24, 0.12) 45%,
+      rgba(8, 18, 24, 0.35) 100%
     );
   pointer-events: none;
 }
@@ -506,10 +496,8 @@ p {
   to { transform: scale(1.08) translate3d(-1.5%, -1%, 0); }
 }
 
-.hero-content {
-  width: min(1120px, calc(100% - 2rem));
-  margin: 0 auto 3.5rem;
-  color: #f7faf8;
+.hero-intro {
+  padding: 2.25rem 0 0.5rem;
   animation: rise-in 0.9s var(--ease) both;
 }
 
@@ -521,35 +509,29 @@ p {
 .hero-brand {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(2.8rem, 8vw, 5.5rem);
+  font-size: clamp(2.4rem, 6.5vw, 4.25rem);
   letter-spacing: -0.045em;
-  line-height: 0.95;
-  margin-bottom: 1rem;
+  line-height: 0.98;
+  margin: 0 0 0.85rem;
+  color: var(--sea-deep);
   text-wrap: balance;
-  text-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
-  animation: brand-glow 5s var(--ease) infinite alternate;
 }
 
 .hero-headline {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: clamp(1.25rem, 2.6vw, 1.85rem);
-  max-width: 18ch;
+  max-width: 22ch;
   margin-bottom: 0.75rem;
   letter-spacing: -0.02em;
-  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--ink);
 }
 
 .hero-sub {
-  max-width: 36ch;
+  max-width: 40ch;
   font-size: 1.05rem;
-  color: rgba(247, 250, 248, 0.88);
-  margin-bottom: 1.75rem;
-}
-
-@keyframes brand-glow {
-  from { filter: brightness(1); }
-  to { filter: brightness(1.08); }
+  color: var(--ink-soft);
+  margin-bottom: 1.5rem;
 }
 
 .hero-actions {
