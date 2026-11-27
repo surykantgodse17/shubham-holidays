@@ -3,11 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": null,
-  "build": {
-    "env": {
-      "VITE_PI_SANDBOX": "true"
-    }
-  },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/health" },
     { "source": "/api/session", "destination": "/api/session" },
