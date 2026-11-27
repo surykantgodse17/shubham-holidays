@@ -218,7 +218,7 @@ export function Checkout() {
         <h1>{isPiSandbox() ? "Pay with Test Pi" : "Pay with Pi"}</h1>
         <p>
           {isPiSandbox()
-            ? "Testnet sandbox on this Grok host. Open in Pi Browser for Test Pi — desktop browsers may block the Pi Sandbox iframe."
+            ? "Testnet sandbox. Open in Pi Browser for Test Pi — regular browsers may block the Pi Sandbox iframe."
             : "Production Mainnet. Open in Pi Browser to complete payment."}{" "}
           Fares are in INR; Pi is charged at GCV <strong>{formatPiUsdRate()}</strong>{" "}
           (catalog USD ÷ 314159; not market price).

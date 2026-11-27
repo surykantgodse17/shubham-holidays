@@ -6,8 +6,10 @@ import {
   CONTACT_TEL,
   CONTACT_WHATSAPP_URL,
 } from "../lib/contact";
+import { isPiSandbox } from "../lib/pi";
 
 export function Footer() {
+  const sandbox = typeof window !== "undefined" && isPiSandbox();
   return (
     <footer className="footer">
       <div className="shell footer-inner">
@@ -24,7 +26,10 @@ export function Footer() {
             शुभम हॉलीडेस
           </p>
           <p className="footer-brand-name">Shubham Holidays</p>
-          <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
+          <p className="footer-tagline">
+            Flights, stays, and curated journeys — sample demo data.{" "}
+            {sandbox ? "Pay with Test Pi (sandbox)." : "Pay with Pi."}
+          </p>
         </div>
         <div className="footer-links">
           <Link to="/flights">Flights</Link>

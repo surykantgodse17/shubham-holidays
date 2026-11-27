@@ -22,11 +22,11 @@ export function BrandLogo({
   return (
     <span className={`brand-logo ${inverted ? "inverted" : ""} ${className}`.trim()}>
       <img
-        src="/logo.jpg"
+        src={withWordmark ? "/logo-full.png" : "/logo.jpg"}
         alt={withWordmark ? "" : "शुभम हॉलीडेस · Shubham Holidays"}
-        width={px}
+        width={withWordmark ? Math.round(px * 2.2) : px}
         height={px}
-        className="brand-logo-img"
+        className={withWordmark ? "brand-logo-img brand-logo-full" : "brand-logo-img"}
         decoding="async"
       />
       {withWordmark ? (
