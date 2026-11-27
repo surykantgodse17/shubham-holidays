@@ -303,8 +303,50 @@ export const destinations = [
   },
 ];
 
+/** Pilgrimage places — same strip layout as destinations; add/remove freely. */
+export const pilgrimageDestinations = [
+  {
+    name: "Varanasi",
+    blurb: "Ganga aarti and ancient ghats",
+    image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
+    href: "/explore/l7",
+  },
+  {
+    name: "Tirupati",
+    blurb: "Hills of Lord Venkateswara",
+    image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80",
+    href: "/explore/l7",
+  },
+  {
+    name: "Shirdi",
+    blurb: "Sai Baba’s sacred town",
+    image: "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=1200&q=80",
+    href: "/explore/l7",
+  },
+  {
+    name: "Somnath",
+    blurb: "Jyotirlinga by the Arabian Sea",
+    image: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1200&q=80",
+    href: "/explore/l7",
+  },
+  {
+    name: "Amritsar",
+    blurb: "Golden Temple and langar",
+    image: "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?auto=format&fit=crop&w=1200&q=80",
+    href: "/explore/l7",
+  },
+  {
+    name: "Rameswaram",
+    blurb: "Island shrine of the south",
+    image: "https://images.unsplash.com/photo-1604695573706-53170668f1e6?auto=format&fit=crop&w=1200&q=80",
+    href: "/explore/l7",
+  },
+];
+
 /** Domestic packages on the homepage — add/remove Package listings freely (no fixed count). */
-export const domesticPackages = listings.filter((l) => l.type === "Package");
+export const domesticPackages = listings.filter(
+  (l) => l.type === "Package" && l.id !== "l7",
+);
 
 export type InternationalPackage = {
   id: string;

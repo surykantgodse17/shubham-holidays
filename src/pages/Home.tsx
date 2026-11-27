@@ -9,6 +9,7 @@ import {
   domesticPackages,
   formatINR,
   internationalPackages,
+  pilgrimageDestinations,
   whatsappBookUrl,
 } from "../data/mock";
 
@@ -200,6 +201,25 @@ export function Home() {
         </div>
         <div className="strip">
           {destinations.map((d) => (
+            <Link key={d.name} to={d.href} className="dest-tile">
+              <img src={d.image} alt="" loading="lazy" />
+              <div className="dest-tile-body">
+                <h3>{d.name}</h3>
+                <p>{d.blurb}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="section shell" aria-labelledby="pilgrimage-heading">
+        <div className="section-head">
+          <span className="eyebrow">Faith · India</span>
+          <h2 id="pilgrimage-heading">Indian Pilgrimage Circuit</h2>
+          <p>Sacred towns across India — pick a shrine and we’ll arrange darshan, stays, and calm travel.</p>
+        </div>
+        <div className="strip strip-pilgrimage">
+          {pilgrimageDestinations.map((d) => (
             <Link key={d.name} to={d.href} className="dest-tile">
               <img src={d.image} alt="" loading="lazy" />
               <div className="dest-tile-body">
