@@ -4,9 +4,11 @@ import { Link, NavLink } from "react-router-dom";
 type NavProps = {
   /** On the home page the header sits under the hero photo. */
   belowHero?: boolean;
+  /** Home hero: menu + brand sit on top of the background photo. */
+  overHero?: boolean;
 };
 
-export function Nav({ belowHero = false }: NavProps) {
+export function Nav({ belowHero = false, overHero = false }: NavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -18,7 +20,9 @@ export function Nav({ belowHero = false }: NavProps) {
   }, []);
 
   return (
-    <header className={`nav${belowHero ? " nav-below-hero" : ""}${scrolled ? " scrolled" : ""}`}>
+    <header
+      className={`nav${belowHero ? " nav-below-hero" : ""}${overHero ? " nav-over-hero" : ""}${scrolled && !overHero ? " scrolled" : ""}`}
+    >
       <div className="nav-stack">
         <div className="nav-brand-row">
           <Link to="/" className="site-brand" onClick={() => setOpen(false)}>

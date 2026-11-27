@@ -21,7 +21,9 @@ export function Footer() {
             decoding="async"
           />
           <p className="footer-brand-name">Shubham Holidays</p>
-          <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
+          <p className="footer-tagline">
+            Book Flights &amp; Hotels with Pi. Fast, Secure &amp; Easy Booking with Pi Payment.
+          </p>
         </div>
         <div className="footer-links">
           <Link to="/flights">Flights</Link>

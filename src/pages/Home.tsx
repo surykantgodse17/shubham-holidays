@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BrandLogo } from "../components/BrandLogo";
 import { Nav } from "../components/Nav";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import {
@@ -13,6 +14,9 @@ import {
 } from "../data/mock";
 
 type Tab = "flights" | "hotels" | "explore";
+
+const HERO_DESCRIPTION =
+  "Book Flights & Hotels with Pi. Fast, Secure & Easy Booking with Pi Payment.";
 
 export function Home() {
   const navigate = useNavigate();
@@ -36,11 +40,32 @@ export function Home() {
 
   return (
     <div className="page">
-      <section className="hero" aria-label="Shubham Holidays hero">
-        <div className="hero-media" role="img" aria-label="Beach resort hotel with airplane flying over the ocean" />
+      <section className="hero hero-with-overlay" aria-label="Shubham Holidays hero">
+        <div
+          className="hero-media hero-media-mainnet02"
+          role="img"
+          aria-label="Passengers looking out of an airplane window"
+        />
+        <div className="hero-overlay">
+          <Nav overHero />
+          <div className="hero-overlay-main shell">
+            <img
+              src="/logo-full.png"
+              alt=""
+              className="hero-center-logo"
+              width={120}
+              height={120}
+              decoding="async"
+            />
+            <p className="hero-brand-name">SHUBHAM HOLIDAYS</p>
+            <p className="hero-description">{HERO_DESCRIPTION}</p>
+          </div>
+        </div>
       </section>
 
-      <Nav belowHero />
+      <section className="section shell mid-logo-section" aria-label="Shubham Holidays">
+        <BrandLogo size="lg" withWordmark />
+      </section>
 
       <section className="section shell">
         <form className="search-panel" onSubmit={onSearch}>

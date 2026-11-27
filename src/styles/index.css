@@ -112,7 +112,7 @@ p {
   padding-bottom: 4rem;
 }
 
-/* Nav — bold brand on top, menu links under it (below hero on home) */
+/* Nav — bold brand on top, menu links under it */
 .nav {
   position: sticky;
   top: 0;
@@ -128,6 +128,48 @@ p {
 .nav.nav-below-hero {
   background: rgba(242, 247, 248, 0.96);
   border-bottom-color: var(--line);
+}
+
+.nav.nav-over-hero {
+  position: relative;
+  top: auto;
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: none;
+  width: 100%;
+}
+
+.nav.nav-over-hero .site-brand-text {
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+
+.nav.nav-over-hero .site-brand-logo {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 0.65rem;
+  padding: 0.2rem;
+}
+
+.nav.nav-over-hero .nav-links a {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.nav.nav-over-hero .nav-links a:hover,
+.nav.nav-over-hero .nav-links a.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.nav.nav-over-hero .menu-btn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.nav.nav-over-hero .menu-btn span,
+.nav.nav-over-hero .menu-btn span::before,
+.nav.nav-over-hero .menu-btn span::after {
+  background: #fff;
 }
 
 .nav.scrolled {
@@ -420,7 +462,7 @@ p {
     max-width: min(72vw, 220px);
   }
   .menu-btn { display: inline-flex; }
-  .nav {
+  .nav:not(.nav-over-hero) {
     position: sticky;
   }
   .nav-links {
@@ -437,6 +479,13 @@ p {
     opacity: 0;
     pointer-events: none;
     transition: transform 0.35s var(--ease), opacity 0.25s var(--ease);
+  }
+  .nav.nav-over-hero .nav-links {
+    background: rgba(12, 24, 30, 0.94);
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+  }
+  .nav.nav-over-hero .nav-links a {
+    color: rgba(255, 255, 255, 0.92);
   }
   .nav-links.open {
     transform: translateY(0);
@@ -504,7 +553,7 @@ p {
 
 .btn-text:hover { color: var(--sea-deep); }
 
-/* Hero — full-bleed photo only; brand + menu sit below the image */
+/* Hero — full-bleed photo with brand, menu, and description overlaid */
 .hero {
   position: relative;
   min-height: 100svh;
@@ -521,6 +570,10 @@ p {
   animation: hero-drift 18s ease-in-out infinite alternate;
 }
 
+.hero-media-mainnet02 {
+  background-image: url("/hero-mainnet02.jpg");
+}
+
 .hero-media::after {
   content: "";
   position: absolute;
@@ -528,11 +581,71 @@ p {
   background:
     linear-gradient(
       180deg,
-      rgba(8, 18, 24, 0.2) 0%,
-      rgba(8, 18, 24, 0.12) 45%,
-      rgba(8, 18, 24, 0.35) 100%
+      rgba(8, 18, 24, 0.45) 0%,
+      rgba(8, 18, 24, 0.28) 42%,
+      rgba(8, 18, 24, 0.55) 100%
     );
   pointer-events: none;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-overlay-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem 0 3.5rem;
+  animation: rise-in 0.95s var(--ease) both;
+}
+
+.hero-center-logo {
+  width: clamp(5.5rem, 16vw, 7.5rem);
+  height: auto;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 1rem;
+  padding: 0.55rem;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+  margin-bottom: 1rem;
+}
+
+.hero-brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.85rem, 6vw, 3.35rem);
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 3px 22px rgba(0, 0, 0, 0.45);
+  margin: 0 0 0.85rem;
+  max-width: 16ch;
+}
+
+.hero-description {
+  max-width: 34ch;
+  margin: 0;
+  font-size: clamp(1.02rem, 2.4vw, 1.2rem);
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+  text-wrap: balance;
+}
+
+.mid-logo-section {
+  display: flex;
+  justify-content: center;
+  padding-top: 2.75rem;
+  padding-bottom: 0;
 }
 
 @keyframes hero-drift {
