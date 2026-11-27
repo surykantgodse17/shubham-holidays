@@ -209,10 +209,27 @@ function fetchModeDestOk(secFetchMode, secFetchDest) {
   return true;
 }
 
-function originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) {
-  if (!origin || !hostMatches(origin, host)) return false;
-  if (!fetchSiteOk(secFetchSite)) return false;
-  if (!fetchModeDestOk(secFetchMode, secFetchDest)) return false;
+function refererHostMatches(referer, host) {
+  if (!referer || !host) return false;
+  return hostMatches(referer, host);
+}
+
+/**
+ * Browser-shaped filter. Pi Browser / older WebViews often omit Origin on GET
+ * and omit Sec-Fetch-* entirely — require Origin∨Referer host match, and only
+ * enforce Sec-Fetch when the client sends it.
+ */
+function originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest, referer) {
+  const originOk = Boolean(origin && hostMatches(origin, host));
+  const refererOk = refererHostMatches(referer, host);
+  if (!originOk && !refererOk) return false;
+  // When Sec-Fetch is present, validate it. When absent (Pi Browser), Origin/Referer is enough.
+  if (secFetchSite || secFetchMode || secFetchDest) {
+    if (secFetchSite && !fetchSiteOk(secFetchSite)) return false;
+    if ((secFetchMode || secFetchDest) && !fetchModeDestOk(secFetchMode, secFetchDest)) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -231,12 +248,13 @@ function appFetchHeaderOk(value) {
 export function sameAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
+  const referer = req.headers.referer || req.headers.referrer;
   const secFetchSite = req.headers["sec-fetch-site"];
   const secFetchMode = req.headers["sec-fetch-mode"];
   const secFetchDest = req.headers["sec-fetch-dest"];
   const requestedWith = req.headers["x-requested-with"];
   if (
-    originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) &&
+    originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest, referer) &&
     appFetchHeaderOk(requestedWith)
   ) {
     next();
@@ -253,12 +271,13 @@ export function sameAppOrigin(req, res, next) {
 export function sameAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
+  const referer = request.headers.get("referer") || request.headers.get("referrer");
   const secFetchSite = request.headers.get("sec-fetch-site");
   const secFetchMode = request.headers.get("sec-fetch-mode");
   const secFetchDest = request.headers.get("sec-fetch-dest");
   const requestedWith = request.headers.get("x-requested-with");
   if (
-    originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) &&
+    originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest, referer) &&
     appFetchHeaderOk(requestedWith)
   ) {
     return null;
@@ -308,12 +327,13 @@ export const PI_DEV_CSP = [
 export function requireAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
+  const referer = req.headers.referer || req.headers.referrer;
   const secFetchSite = req.headers["sec-fetch-site"];
   const secFetchMode = req.headers["sec-fetch-mode"];
   const secFetchDest = req.headers["sec-fetch-dest"];
   const requestedWith = req.headers["x-requested-with"];
   if (
-    !originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) ||
+    !originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest, referer) ||
     !appFetchHeaderOk(requestedWith)
   ) {
     res.status(403).json({ ok: false, error: "Forbidden." });
@@ -325,12 +345,13 @@ export function requireAppOrigin(req, res, next) {
 export function requireAppOriginWeb(request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
+  const referer = request.headers.get("referer") || request.headers.get("referrer");
   const secFetchSite = request.headers.get("sec-fetch-site");
   const secFetchMode = request.headers.get("sec-fetch-mode");
   const secFetchDest = request.headers.get("sec-fetch-dest");
   const requestedWith = request.headers.get("x-requested-with");
   if (
-    !originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) ||
+    !originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest, referer) ||
     !appFetchHeaderOk(requestedWith)
   ) {
     return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });

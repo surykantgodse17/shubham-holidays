@@ -6,7 +6,7 @@ import {
 } from "../server/security.js";
 
 /** Mint HttpOnly sh_browser cookie + CSRF token — not an authorization grant. */
-export async function GET(request) {
+async function mintSession(request) {
   const limited = await sessionRateLimitWeb(request);
   if (limited) return limited;
   const forbidden = requireAppOriginWeb(request);
@@ -16,19 +16,27 @@ export async function GET(request) {
   const headers = { "Content-Type": "application/json" };
   if (setCookie) headers["Set-Cookie"] = setCookie;
   return new Response(
-    JSON.stringify({ ok: true, csrf: issueCsrfToken(browserId) }),
+    JSON.stringify({ ok: true, csrf: issueCsrfToken(browserId), browser: true }),
     { status: 200, headers },
   );
 }
 
+export async function GET(request) {
+  return mintSession(request);
+}
+
+export async function POST(request) {
+  return mintSession(request);
+}
+
 export default async function handler(req, res) {
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "POST") {
     res.status(405).json({ ok: false, error: "Method not allowed." });
     return;
   }
   const url = `http://${req.headers.host || "localhost"}${req.url}`;
-  const request = new Request(url, { method: "GET", headers: req.headers });
-  const response = await GET(request);
+  const request = new Request(url, { method: req.method, headers: req.headers });
+  const response = await mintSession(request);
   const setCookie = response.headers.get("Set-Cookie");
   if (setCookie) res.setHeader("Set-Cookie", setCookie);
   const body = await response.json().catch(() => ({ ok: false }));

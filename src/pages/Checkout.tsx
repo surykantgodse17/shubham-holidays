@@ -212,9 +212,9 @@ export function Checkout() {
         <span className="eyebrow">Checkout</span>
         <h1>Pay with Pi</h1>
         <p>
-          Production Mainnet. Fares are in INR; Pi is charged at GCV{" "}
-          <strong>{formatPiUsdRate()}</strong>
-          {" "}(catalog USD ÷ 314159; not market price).
+          {isPiSandbox() ? "Testnet sandbox (Test Pi)." : "Production Mainnet."} Fares are in
+          INR; Pi is charged at GCV <strong>{formatPiUsdRate()}</strong> (catalog USD ÷ 314159;
+          not market price).
         </p>
         <Steps
           items={[

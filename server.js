@@ -114,13 +114,16 @@ async function createApp() {
   });
 
   /** Mint HttpOnly browser cookie + CSRF token — rate-limited + same-app origin (not an auth grant). */
-  app.get("/api/session", sessionRateLimit, requireAppOrigin, ensureBrowserSession, (req, res) => {
+  function mintBrowserSession(req, res) {
     res.json({
       ok: true,
       browser: Boolean(req.shBrowserId),
       csrf: issueCsrfToken(req.shBrowserId),
     });
-  });
+  }
+  app.get("/api/session", sessionRateLimit, requireAppOrigin, ensureBrowserSession, mintBrowserSession);
+  // POST preferred — browsers always send Origin on POST (Pi Browser often omits it on GET).
+  app.post("/api/session", sessionRateLimit, requireAppOrigin, ensureBrowserSession, mintBrowserSession);
 
   // Search: rate limit + HttpOnly cookie (Origin/Sec-Fetch secondary only).
   // Checkout/pay: rate limit + cookie + HMAC CSRF; pay also needs Pi Bearer.

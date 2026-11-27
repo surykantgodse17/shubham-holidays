@@ -5,16 +5,35 @@ export function getCsrfToken() {
   return csrfToken;
 }
 
-/** Fetch /api/session so checkout/pay POSTs can send X-CSRF-Token. */
+/**
+ * Mint / refresh browser session + CSRF.
+ * Use POST so browsers always send Origin (GET often omits it; Pi Browser also
+ * often omits Sec-Fetch-* — server accepts Referer when Origin is missing).
+ */
 export async function ensureCsrfToken(): Promise<string> {
   if (csrfToken) return csrfToken;
   const res = await fetch("/api/session", {
-    credentials: "include",
+    method: "POST",
+    credentials: "same-origin",
     cache: "no-store",
-    headers: { "X-Requested-With": "ShubhamHolidays" },
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Requested-With": "ShubhamHolidays",
+    },
+    body: "{}",
   });
   if (!res.ok) {
-    throw new Error("Could not start browser session. Refresh and try again.");
+    let detail = "";
+    try {
+      const body = (await res.json()) as { error?: string };
+      detail = String(body.error || "").trim();
+    } catch {
+      /* ignore */
+    }
+    throw new Error(
+      detail || `Could not start browser session (${res.status}). Refresh and try again.`,
+    );
   }
   const data = (await res.json().catch(() => ({}))) as { csrf?: string };
   csrfToken = String(data.csrf || "").trim();
