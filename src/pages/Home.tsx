@@ -5,7 +5,6 @@ import { Nav } from "../components/Nav";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import {
   cities,
-  destinations,
   domesticPackages,
   formatINR,
   internationalPackages,
@@ -165,25 +164,6 @@ export function Home() {
             Demo inventory — no live airline or hotel APIs.
           </p>
         </form>
-      </section>
-
-      <section className="section shell">
-        <div className="section-head">
-          <span className="eyebrow">Where to next</span>
-          <h2>Destinations with room to breathe</h2>
-          <p>Soft coasts, green shade, and high ridges — pick a mood and we’ll take it from search to booking.</p>
-        </div>
-        <div className="strip">
-          {destinations.map((d) => (
-            <Link key={d.name} to={d.href} className="dest-tile">
-              <img src={d.image} alt="" loading="lazy" />
-              <div className="dest-tile-body">
-                <h3>{d.name}</h3>
-                <p>{d.blurb}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
       </section>
 
       <section className="section shell" aria-labelledby="domestic-packages-heading">
