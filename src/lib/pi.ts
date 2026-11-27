@@ -139,14 +139,19 @@ export function inPiBrowser(): boolean {
  * Testnet 01 (Grok `*.apps.grok.bot`) always uses sandbox Test Pi.
  * Mainnet hosts force sandbox off. Otherwise honor `VITE_PI_SANDBOX` (Vercel Mainnet sets false).
  */
+function isTestnet02Host(host: string): boolean {
+  return (
+    host === "shubham-holidays.vercel.app" ||
+    host.endsWith(".shubham-holidays.vercel.app") ||
+    host.includes("shubham-holidays-testnet-02")
+  );
+}
+
 export function isPiSandbox(): boolean {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     // Testnet 01 (Grok) + Testnet 02 (Vercel) → always sandbox Test Pi.
-    if (host.endsWith("apps.grok.bot")) return true;
-    if (host === "shubham-holidays.vercel.app" || host.endsWith(".shubham-holidays.vercel.app")) {
-      return true;
-    }
+    if (host.endsWith("apps.grok.bot") || isTestnet02Host(host)) return true;
     // Mainnet 01 / Mainnet 02 → never sandbox.
     if (
       host === "shubhamholidays.vercel.app" ||

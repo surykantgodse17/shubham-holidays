@@ -228,7 +228,7 @@ export function Checkout() {
 
       <div className="shell book-layout">
         <form className="panel" onSubmit={onPayPi}>
-          <h2>{isPiSandbox() ? "Pi payment (Testnet)" : "Pi payment (Mainnet)"}</h2>
+          <h2>{isPiSandbox() ? "Pay with Test Pi (Sandbox)" : "Pi payment (Mainnet)"}</h2>
 
           <div className={`pi-status pi-status-${conn.status}`} role="status" aria-live="polite">
             <div className="pi-status-row">
@@ -288,8 +288,10 @@ export function Checkout() {
               : isConnecting
                 ? "Checking Pi Browser…"
                 : canPayWithPi
-                  ? `Pay with Pi (${formatPi(amountPi)})`
-                  : "Pay with Pi (open in Pi Browser)"}
+                  ? `Pay with Test Pi (${formatPi(amountPi)})`
+                  : isPiSandbox()
+                    ? "Pay with Test Pi (open in Pi Browser)"
+                    : "Pay with Pi (open in Pi Browser)"}
           </button>
 
           {canSandboxDemo && (

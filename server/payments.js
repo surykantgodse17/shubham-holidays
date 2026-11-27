@@ -20,7 +20,8 @@ function resolvePiApiBase(hostHint = "") {
   const hostSandbox =
     host.endsWith("apps.grok.bot") ||
     host === "shubham-holidays.vercel.app" ||
-    host.endsWith(".shubham-holidays.vercel.app");
+    host.endsWith(".shubham-holidays.vercel.app") ||
+    host.includes("shubham-holidays-testnet-02");
   return envSandbox || hostSandbox
     ? "https://sandbox-api.minepi.com/v2"
     : "https://api.minepi.com/v2";
