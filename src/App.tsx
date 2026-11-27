@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Nav } from "./components/Nav";
 import { Footer } from "./components/Footer";
 import { Home } from "./pages/Home";
@@ -18,10 +18,13 @@ import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
 
-export default function App() {
+function AppChrome() {
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
+
   return (
-    <HashRouter>
-      <Nav />
+    <>
+      {!isHome && <Nav />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/flights" element={<Flights />} />
@@ -42,6 +45,14 @@ export default function App() {
       </Routes>
       <Footer />
       <FloatingWhatsApp />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <AppChrome />
     </HashRouter>
   );
 }

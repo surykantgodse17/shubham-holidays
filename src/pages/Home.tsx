@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Nav } from "../components/Nav";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import {
   cities,
@@ -39,8 +40,9 @@ export function Home() {
         <div className="hero-media" role="img" aria-label="Beach resort hotel with airplane flying over the ocean" />
       </section>
 
-      <section className="hero-intro shell" aria-label="Brand">
-        <p className="hero-brand">Shubham Holidays</p>
+      <Nav belowHero />
+
+      <section className="hero-intro shell">
         <h1 className="hero-headline">Travel that feels considered</h1>
         <p className="hero-sub">
           Search flights and stays, then book curated packages and local experiences — all in one calm flow.

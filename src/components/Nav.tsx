@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 
-export function Nav() {
+type NavProps = {
+  /** On the home page the header sits under the hero photo. */
+  belowHero?: boolean;
+};
+
+export function Nav({ belowHero = false }: NavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -12,32 +17,22 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    setOpen(false);
-  }, []);
-
   return (
-    <header className={`nav${scrolled ? " scrolled" : ""}`}>
-      <div className="nav-inner">
-        <Link to="/" className="brand" onClick={() => setOpen(false)} aria-label="Shubham Holidays">
-          <img
-            src="/logo-full.png"
-            alt="Shubham Holidays"
-            className="nav-logo"
-            width={220}
-            height={48}
-            decoding="async"
-          />
-        </Link>
-
-        <button
-          className="menu-btn"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span />
-        </button>
+    <header className={`nav${belowHero ? " nav-below-hero" : ""}${scrolled ? " scrolled" : ""}`}>
+      <div className="nav-stack">
+        <div className="nav-brand-row">
+          <Link to="/" className="site-brand" onClick={() => setOpen(false)}>
+            SHUBHAM HOLIDAYS
+          </Link>
+          <button
+            className="menu-btn"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span />
+          </button>
+        </div>
 
         <nav className={`nav-links${open ? " open" : ""}`} aria-label="Primary">
           <NavLink to="/" end onClick={() => setOpen(false)}>
@@ -59,12 +54,6 @@ export function Nav() {
             Contact
           </NavLink>
         </nav>
-
-        <div className="nav-cta">
-          <Link to="/explore" className="btn btn-sea">
-            Plan a trip
-          </Link>
-        </div>
       </div>
     </header>
   );
