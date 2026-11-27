@@ -215,7 +215,7 @@ export const listings: Listing[] = [
   },
   {
     id: "l7",
-    title: "भारतातील देवस्थान",
+    title: "Indian Pilgrimage Circuit",
     type: "Package",
     place: "Varanasi · Tirupati · Shirdi · Somnath",
     duration: "6 nights",
