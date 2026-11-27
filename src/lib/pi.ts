@@ -392,6 +392,7 @@ async function postBridge(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
       "X-CSRF-Token": csrf,
+      "X-Requested-With": "ShubhamHolidays",
     },
     body: JSON.stringify(body),
   });

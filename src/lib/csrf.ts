@@ -8,7 +8,11 @@ export function getCsrfToken() {
 /** Fetch /api/session so checkout/pay POSTs can send X-CSRF-Token. */
 export async function ensureCsrfToken(): Promise<string> {
   if (csrfToken) return csrfToken;
-  const res = await fetch("/api/session", { credentials: "include", cache: "no-store" });
+  const res = await fetch("/api/session", {
+    credentials: "include",
+    cache: "no-store",
+    headers: { "X-Requested-With": "ShubhamHolidays" },
+  });
   if (!res.ok) {
     throw new Error("Could not start browser session. Refresh and try again.");
   }

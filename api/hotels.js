@@ -1,4 +1,5 @@
 import { searchHotels, normalizeAirport } from "../server/travel.js";
+import { BODY_MAX_SEARCH, readNodeBodyLimited, readWebBodyLimited } from "../server/httpBody.js";
 import { rateLimitWeb, sameAppOriginWeb, safeApiError } from "../server/security.js";
 
 async function handleSearch(request) {
@@ -9,7 +10,12 @@ async function handleSearch(request) {
 
   try {
     const url = new URL(request.url);
-    const body = request.method === "POST" ? await request.json().catch(() => ({})) : {};
+    let body = {};
+    if (request.method === "POST") {
+      const bodyRead = await readWebBodyLimited(request, BODY_MAX_SEARCH);
+      if (!bodyRead.ok) return bodyRead.response;
+      body = bodyRead.text ? JSON.parse(bodyRead.text) : {};
+    }
     const city = normalizeAirport(body.city ?? url.searchParams.get("city"), "GOI");
     const checkin = String(body.checkin ?? url.searchParams.get("checkin") ?? "").slice(0, 10);
     const nights = Math.min(
@@ -23,6 +29,9 @@ async function handleSearch(request) {
     const result = await searchHotels({ city, checkin, nights, adults });
     return Response.json(result);
   } catch (err) {
+    if (err instanceof SyntaxError) {
+      return Response.json({ ...safeApiError(err), hotels: [], message: "Invalid JSON body." }, { status: 400 });
+    }
     return Response.json({ ...safeApiError(err), hotels: [] }, { status: 500 });
   }
 }
@@ -38,15 +47,24 @@ export async function GET(request) {
 
 export default async function handler(req, res) {
   const url = `http://${req.headers.host || "localhost"}${req.url}`;
-  const chunks = [];
+  let raw = "{}";
   if (req.method === "POST") {
-    for await (const chunk of req) chunks.push(chunk);
+    const bodyRead = await readNodeBodyLimited(req, BODY_MAX_SEARCH);
+    if (!bodyRead.ok) {
+      res.status(bodyRead.status).json({
+        source: "error",
+        message: bodyRead.error,
+        flights: [],
+        hotels: [],
+      });
+      return;
+    }
+    raw = bodyRead.raw.toString("utf8") || "{}";
   }
-  const raw = Buffer.concat(chunks).toString("utf8");
   const request = new Request(url, {
     method: req.method || "GET",
     headers: req.headers,
-    body: req.method === "POST" ? raw || "{}" : undefined,
+    body: req.method === "POST" ? raw : undefined,
   });
   const response = await handleSearch(request);
   const body = await response.text();

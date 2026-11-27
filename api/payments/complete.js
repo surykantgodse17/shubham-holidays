@@ -1,13 +1,12 @@
 import { completePayment } from "../../server/payments.js";
 import { BOOKING_META_MAX_BYTES, sanitizeBookingMeta } from "../../server/bookings.js";
+import { BODY_MAX_DEFAULT, readNodeBodyLimited, readWebBodyLimited } from "../../server/httpBody.js";
 import {
   paymentRateLimitWeb,
   requireAppOriginWeb,
   requireBrowserSessionWeb,
   requireCsrfWeb,
 } from "../../server/security.js";
-
-const COMPLETE_BODY_MAX_BYTES = 8192;
 
 export async function POST(request) {
   const limited = await paymentRateLimitWeb(request);
@@ -20,11 +19,9 @@ export async function POST(request) {
   if (csrfBlocked) return csrfBlocked;
 
   try {
-    const raw = await request.text();
-    if (raw.length > COMPLETE_BODY_MAX_BYTES) {
-      return Response.json({ ok: false, error: "Request body too large." }, { status: 413 });
-    }
-    const body = raw ? JSON.parse(raw) : {};
+    const bodyRead = await readWebBodyLimited(request, BODY_MAX_DEFAULT);
+    if (!bodyRead.ok) return bodyRead.response;
+    const body = bodyRead.text ? JSON.parse(bodyRead.text) : {};
     const meta = sanitizeBookingMeta(body.meta);
     if (JSON.stringify(meta).length > BOOKING_META_MAX_BYTES) {
       return Response.json({ ok: false, error: "Booking meta too large." }, { status: 413 });
@@ -39,6 +36,7 @@ export async function POST(request) {
         bookingId: body.bookingId,
         guestName: body.guestName,
         email: body.email,
+        title: body.title,
         subtitle: body.subtitle,
         meta,
       },
@@ -63,18 +61,16 @@ export default async function handler(req, res) {
     res.status(405).json({ ok: false, error: "Method not allowed." });
     return;
   }
-  const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
-  const raw = Buffer.concat(chunks);
-  if (raw.length > COMPLETE_BODY_MAX_BYTES) {
-    res.status(413).json({ ok: false, error: "Request body too large." });
+  const bodyRead = await readNodeBodyLimited(req, BODY_MAX_DEFAULT);
+  if (!bodyRead.ok) {
+    res.status(bodyRead.status).json({ ok: false, error: bodyRead.error });
     return;
   }
   const url = `http://${req.headers.host || "localhost"}${req.url}`;
   const request = new Request(url, {
     method: "POST",
     headers: req.headers,
-    body: raw.toString("utf8") || "{}",
+    body: bodyRead.raw.toString("utf8") || "{}",
   });
   const response = await POST(request);
   const body = await response.text();

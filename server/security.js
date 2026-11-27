@@ -136,13 +136,23 @@ function hostMatches(urlString, host) {
  * Auth: HttpOnly sh_browser + (payments) Pi Bearer + signed order tickets.
  */
 
+/** Per-process random key when no env secret exists (local only — never a fixed string). */
+let ephemeralCsrfKey = null;
+
 function csrfSigningKey() {
-  const material =
-    process.env.PI_NETWORK_API_KEY ||
-    process.env.PI_API_KEY ||
-    process.env.DATABASE_URL ||
-    "shubham-local-csrf";
-  return crypto.createHash("sha256").update(`shubham-csrf-v1:${material}`).digest();
+  const material = String(
+    process.env.CSRF_SECRET ||
+      process.env.PI_NETWORK_API_KEY ||
+      process.env.PI_API_KEY ||
+      process.env.DATABASE_URL ||
+      "",
+  ).trim();
+  if (material) {
+    return crypto.createHash("sha256").update(`shubham-csrf-v1:${material}`).digest();
+  }
+  // Published apps always have DATABASE_URL; local/dev gets an unpredictable ephemeral key.
+  ephemeralCsrfKey ??= crypto.randomBytes(32);
+  return ephemeralCsrfKey;
 }
 
 /** HMAC CSRF bound to the HttpOnly browser cookie id (not forgeable via Origin alone). */
@@ -207,15 +217,27 @@ function originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest
 }
 
 /**
- * Search/API browser-shaped guard (not sole auth).
+ * Search/session browser-shaped guard (secondary only).
+ * Primary controls: rate limits; checkout/pay also use HttpOnly cookie + HMAC CSRF.
+ * Requires X-Requested-With so naive cross-site form posts cannot call these APIs.
  */
+const APP_FETCH_HEADER = "shubhamholidays";
+
+function appFetchHeaderOk(value) {
+  return String(value || "").trim().toLowerCase() === APP_FETCH_HEADER;
+}
+
 export function sameAppOrigin(req, res, next) {
   const origin = req.headers.origin;
   const host = req.headers.host;
   const secFetchSite = req.headers["sec-fetch-site"];
   const secFetchMode = req.headers["sec-fetch-mode"];
   const secFetchDest = req.headers["sec-fetch-dest"];
-  if (originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) {
+  const requestedWith = req.headers["x-requested-with"];
+  if (
+    originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) &&
+    appFetchHeaderOk(requestedWith)
+  ) {
     next();
     return;
   }
@@ -233,7 +255,13 @@ export function sameAppOriginWeb(request) {
   const secFetchSite = request.headers.get("sec-fetch-site");
   const secFetchMode = request.headers.get("sec-fetch-mode");
   const secFetchDest = request.headers.get("sec-fetch-dest");
-  if (originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) return null;
+  const requestedWith = request.headers.get("x-requested-with");
+  if (
+    originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) &&
+    appFetchHeaderOk(requestedWith)
+  ) {
+    return null;
+  }
   return Response.json(
     { source: "error", message: "Forbidden.", flights: [], hotels: [] },
     { status: 403 },
@@ -282,7 +310,11 @@ export function requireAppOrigin(req, res, next) {
   const secFetchSite = req.headers["sec-fetch-site"];
   const secFetchMode = req.headers["sec-fetch-mode"];
   const secFetchDest = req.headers["sec-fetch-dest"];
-  if (!originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) {
+  const requestedWith = req.headers["x-requested-with"];
+  if (
+    !originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) ||
+    !appFetchHeaderOk(requestedWith)
+  ) {
     res.status(403).json({ ok: false, error: "Forbidden." });
     return;
   }
@@ -295,7 +327,11 @@ export function requireAppOriginWeb(request) {
   const secFetchSite = request.headers.get("sec-fetch-site");
   const secFetchMode = request.headers.get("sec-fetch-mode");
   const secFetchDest = request.headers.get("sec-fetch-dest");
-  if (!originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest)) {
+  const requestedWith = request.headers.get("x-requested-with");
+  if (
+    !originAndFetchOk(origin, host, secFetchSite, secFetchMode, secFetchDest) ||
+    !appFetchHeaderOk(requestedWith)
+  ) {
     return Response.json({ ok: false, error: "Forbidden." }, { status: 403 });
   }
   return null;

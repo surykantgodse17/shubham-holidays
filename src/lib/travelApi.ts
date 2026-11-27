@@ -52,6 +52,7 @@ async function postJson<T>(url: string, body: Record<string, string | number>): 
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      "X-Requested-With": "ShubhamHolidays",
     },
     body: JSON.stringify(body),
   });

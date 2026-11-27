@@ -1,4 +1,5 @@
 import { createCheckoutSession } from "../../server/checkout.js";
+import { BODY_MAX_DEFAULT, readNodeBodyLimited, readWebBodyLimited } from "../../server/httpBody.js";
 import {
   clientKeyFromRequest,
   paymentRateLimitWeb,
@@ -18,7 +19,9 @@ export async function POST(request) {
   if (csrfBlocked) return csrfBlocked;
 
   try {
-    const body = await request.json().catch(() => ({}));
+    const bodyRead = await readWebBodyLimited(request, BODY_MAX_DEFAULT);
+    if (!bodyRead.ok) return bodyRead.response;
+    const body = bodyRead.text ? JSON.parse(bodyRead.text) : {};
     const session = await createCheckoutSession({
       browserId: browser.browserId,
       clientIp: clientKeyFromRequest(request),
@@ -45,14 +48,16 @@ export default async function handler(req, res) {
     res.status(405).json({ ok: false, error: "Method not allowed." });
     return;
   }
-  const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
-  const raw = Buffer.concat(chunks).toString("utf8");
+  const bodyRead = await readNodeBodyLimited(req, BODY_MAX_DEFAULT);
+  if (!bodyRead.ok) {
+    res.status(bodyRead.status).json({ ok: false, error: bodyRead.error });
+    return;
+  }
   const url = `http://${req.headers.host || "localhost"}${req.url}`;
   const request = new Request(url, {
     method: "POST",
     headers: req.headers,
-    body: raw || "{}",
+    body: bodyRead.raw.toString("utf8") || "{}",
   });
   const response = await POST(request);
   const body = await response.text();
