@@ -40,6 +40,9 @@ export function Nav() {
         </button>
 
         <nav className={`nav-links${open ? " open" : ""}`} aria-label="Primary">
+          <NavLink to="/" end onClick={() => setOpen(false)}>
+            Home
+          </NavLink>
           <NavLink to="/flights" onClick={() => setOpen(false)}>
             Flights
           </NavLink>
