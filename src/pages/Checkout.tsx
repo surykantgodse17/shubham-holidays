@@ -317,7 +317,14 @@ export function Checkout() {
 
         <aside className="panel">
           <div className="checkout-aside-brand">
-            <BrandLogo size="sm" withWordmark />
+            <img
+              src="/logo-full.png"
+              alt="Shubham Holidays"
+              className="order-brand-logo"
+              width={200}
+              height={70}
+              decoding="async"
+            />
           </div>
           <h2>Order</h2>
           <div className="summary-row">

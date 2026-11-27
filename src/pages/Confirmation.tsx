@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { BrandLogo } from "../components/BrandLogo";
 import { formatINR } from "../data/mock";
 import { formatPi, formatPiUsdRate } from "../lib/pi";
 import { getBookings } from "../lib/storage";
@@ -26,10 +25,14 @@ export function Confirmation() {
   return (
     <div className="page">
       <div className="shell confirm-wrap">
-        <BrandLogo size="lg" />
-        <div className="check" aria-hidden>
-          {isDemo ? "i" : "✓"}
-        </div>
+        <img
+          src="/logo-full.png"
+          alt="Shubham Holidays"
+          className="confirm-brand-logo"
+          width={220}
+          height={78}
+          decoding="async"
+        />
         <h1>{isDemo ? "Local demo saved" : "Booking confirmed"}</h1>
         <p>
           {isDemo ? (

@@ -350,6 +350,24 @@ p {
   margin-bottom: 0.85rem;
 }
 
+.order-brand-logo {
+  display: block;
+  height: 52px;
+  width: auto;
+  max-width: min(100%, 220px);
+  object-fit: contain;
+  object-position: left center;
+}
+
+.confirm-brand-logo {
+  display: block;
+  height: 72px;
+  width: auto;
+  max-width: min(90vw, 260px);
+  margin: 0 auto 1.25rem;
+  object-fit: contain;
+}
+
 .footer-brand .footer-logo {
   display: block;
   height: 52px;
