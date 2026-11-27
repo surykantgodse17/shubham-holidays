@@ -66,7 +66,7 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
             Contact
           </NavLink>
           {overHero ? (
-            <Link to="/flights" className="btn btn-sea nav-cta" onClick={() => setOpen(false)}>
+            <Link to="/flights" className="btn btn-primary nav-cta" onClick={() => setOpen(false)}>
               Plan a trip
             </Link>
           ) : null}

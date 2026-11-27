@@ -171,6 +171,14 @@ p {
   min-height: 2.35rem;
   padding: 0.45rem 1.05rem;
   font-size: 0.9rem;
+  color: #fff;
+  background: var(--amber);
+  box-shadow: 0 2px 10px rgba(168, 107, 20, 0.28);
+}
+
+.nav.nav-over-hero .nav-cta:hover {
+  background: var(--amber-hot);
+  color: #fff;
 }
 
 .nav.nav-over-hero .menu-btn {
