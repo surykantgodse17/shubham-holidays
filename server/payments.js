@@ -11,21 +11,14 @@ import { piAmountsEqual } from "./pricing.js";
 import { sql } from "./db.js";
 import { saveConfirmedBooking } from "./bookings.js";
 
-function resolvePiApiBase(hostHint = "") {
+/**
+ * Platform API base. Staging vs Mainnet is the Server API key + SDK sandbox flag —
+ * not a separate host. `sandbox-api.minepi.com` is dead (expired TLS / 503).
+ */
+function resolvePiApiBase(_hostHint = "") {
   const explicit = String(process.env.PI_API_BASE || "").trim();
   if (explicit) return explicit.replace(/\/$/, "");
-  const envSandbox = String(process.env.PI_SANDBOX || "").trim().toLowerCase() === "true";
-  const host = String(hostHint || "").toLowerCase().split(":")[0];
-  // Testnet 01 Grok + Testnet 02 Vercel → sandbox API (Mainnet hosts stay on api.minepi.com).
-  const hostSandbox =
-    host.endsWith("apps.grok.bot") ||
-    host === "shubham-holidays.vercel.app" ||
-    host.endsWith(".shubham-holidays.vercel.app") ||
-    host.includes("shubham-holidays-testnet-02") ||
-    host === "shubhamholidaysf2001.pinet.com";
-  return envSandbox || hostSandbox
-    ? "https://sandbox-api.minepi.com/v2"
-    : "https://api.minepi.com/v2";
+  return "https://api.minepi.com/v2";
 }
 
 export function piApiKey() {
@@ -45,13 +38,20 @@ export async function verifyPiAccessToken(accessToken, requestHost) {
   }
 
   const base = resolvePiApiBase(requestHost);
-  const res = await fetch(`${base}/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
+  let res;
+  try {
+    res = await fetch(`${base}/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+  } catch {
+    const err = new Error("Could not reach Pi API. Try again in a moment.");
+    err.status = 503;
+    throw err;
+  }
 
   const text = await res.text();
   let data = {};

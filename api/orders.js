@@ -20,7 +20,10 @@ export async function POST(request) {
   if (csrfBlocked) return csrfBlocked;
 
   try {
-    const caller = await requirePiCaller(request.headers.get("authorization"));
+    const caller = await requirePiCaller(
+      request.headers.get("authorization"),
+      request.headers.get("host") || "",
+    );
     const bodyRead = await readWebBodyLimited(request, BODY_MAX_DEFAULT);
     if (!bodyRead.ok) return bodyRead.response;
     const body = bodyRead.text ? JSON.parse(bodyRead.text) : {};

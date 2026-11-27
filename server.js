@@ -190,7 +190,7 @@ async function createApp() {
 
   app.post("/api/orders", ...protectPay, requireBrowserSession, async (req, res) => {
     try {
-      const caller = await requirePiCaller(req.headers.authorization);
+      const caller = await requirePiCaller(req.headers.authorization, req.headers.host || "");
       const checkoutId = String(req.body?.checkoutId || req.body?.checkoutSessionId || "").trim();
       if (!checkoutId) {
         res.status(400).json({ ok: false, error: "Missing checkout session. Start checkout again." });
