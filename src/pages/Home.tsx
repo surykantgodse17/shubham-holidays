@@ -35,25 +35,26 @@ export function Home() {
 
   return (
     <div className="page">
-      <section className="hero" aria-label="Shubham Holidays hero">
-        <div className="hero-media" role="img" aria-label="Tropical resort coastline with airplane overhead" />
+      <section className="hero" aria-label="शुभम हॉलीडेस · Shubham Holidays hero">
+        <div className="hero-media" role="img" aria-label="Travelers exploring a coastal destination" />
         <div className="hero-content">
-          <div className="hero-brand-row">
-            <div className="hero-logo-frame">
-              <img
-                src="/logo-full.png"
-                alt="Shubham Holidays"
-                className="hero-logo"
-                width={280}
-                height={123}
-                decoding="async"
-              />
-            </div>
-            <p className="hero-brand">Shubham Holidays</p>
+          <div className="hero-brand-block">
+            <img
+              src="/logo-full.png"
+              alt=""
+              className="hero-logo"
+              width={280}
+              height={123}
+              decoding="async"
+            />
+            <p className="hero-brand-mr" lang="mr">
+              शुभम हॉलीडेस
+            </p>
+            <p className="hero-brand-en">Shubham Holidays</p>
           </div>
-          <h1 className="hero-headline">Travel that feels considered</h1>
+          <h1 className="hero-headline">Journeys planned with care</h1>
           <p className="hero-sub">
-            Search flights and stays, then book curated packages and local experiences — all in one calm flow.
+            Flights, stays, and curated packages across India and beyond — one calm path from search to booking.
           </p>
           <div className="hero-actions">
             <Link to="/flights" className="btn btn-primary">

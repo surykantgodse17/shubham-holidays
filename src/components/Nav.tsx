@@ -19,15 +19,21 @@ export function Nav() {
   return (
     <header className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="nav-inner">
-        <Link to="/" className="brand" onClick={() => setOpen(false)} aria-label="Shubham Holidays">
+        <Link to="/" className="brand" onClick={() => setOpen(false)} aria-label="शुभम हॉलीडेस · Shubham Holidays">
           <img
             src="/logo-full.png"
-            alt="Shubham Holidays"
+            alt=""
             className="nav-logo"
             width={220}
             height={48}
             decoding="async"
           />
+          <span className="brand-text-stack">
+            <span className="brand-text-mr" lang="mr">
+              शुभम हॉलीडेस
+            </span>
+            <span className="brand-text-en">Shubham Holidays</span>
+          </span>
         </Link>
 
         <button

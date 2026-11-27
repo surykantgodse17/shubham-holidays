@@ -9,9 +9,6 @@ export const PI_USD_RATE_COPY = `1 Pi = ${PI_USD_RATE_LABEL}`;
 export const DEMO_INR_PER_USD = 83;
 
 export const PI_SDK_URL = "https://sdk.minepi.com/pi-sdk.js";
-/** sha384 of https://sdk.minepi.com/pi-sdk.js (fetched 2026-11-26; bump if Pi rotates the file) */
-export const PI_SDK_SRI =
-  "sha384-5RHyz+CU5PdxEjV3L+m1ZLXokX+DsqlX8LNHpX/WLfWcBkfRr0qyjPH5SiVquXQx";
 
 export type PiPaymentResult = {
   mode: "pi" | "sandbox-demo";
@@ -230,8 +227,7 @@ export function loadPiSdkScript(): Promise<void> {
     const script = document.createElement("script");
     script.src = PI_SDK_URL;
     script.async = true;
-    script.crossOrigin = "anonymous";
-    script.integrity = PI_SDK_SRI;
+    // No SRI: sdk.minepi.com does not send CORS headers for integrity checks.
     script.dataset.piSdk = "1";
 
     const timer = window.setTimeout(() => {
@@ -254,7 +250,7 @@ export function loadPiSdkScript(): Promise<void> {
       scriptPromise = null;
       reject(
         new Error(
-          "Pi SDK failed to load (network or SRI mismatch). Refresh in Pi Browser, or use the local demo (not a real payment).",
+          "Pi SDK failed to load. Refresh in Pi Browser, or use the local demo (not a real payment).",
         ),
       );
     };
@@ -512,7 +508,11 @@ export async function payWithPi(opts: {
   if (!opts.kind || !opts.productId) throw new Error("Missing product for checkout.");
 
   if (!inPiBrowser()) {
-    throw new Error("Open this app in Pi Browser to pay with Pi (Mainnet).");
+    throw new Error(
+      isPiSandbox()
+        ? "Open this app in Pi Browser to pay with Test Pi (sandbox)."
+        : "Open this app in Pi Browser to pay with Pi (Mainnet).",
+    );
   }
 
   await initPiSdkInBrowser();

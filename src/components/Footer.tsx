@@ -14,12 +14,15 @@ export function Footer() {
         <div className="footer-brand">
           <img
             src="/logo-full.png"
-            alt="Shubham Holidays"
+            alt="शुभम हॉलीडेस · Shubham Holidays"
             className="footer-logo"
             width={160}
             height={70}
             decoding="async"
           />
+          <p className="footer-brand-name-mr" lang="mr">
+            शुभम हॉलीडेस
+          </p>
           <p className="footer-brand-name">Shubham Holidays</p>
           <p className="footer-tagline">Flights, stays, and curated journeys — sample demo data. Pay with Pi.</p>
         </div>

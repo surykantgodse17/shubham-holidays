@@ -163,11 +163,16 @@ export function Checkout() {
         subtitle: cart!.subtitle,
         amountInr: cart!.amount,
       });
-      await finishBooking(bookingId, "Pi (Mainnet)", result.amountPi, {
-        status: "confirmed",
-        paymentId: result.paymentId,
-        txid: result.txid,
-      });
+      await finishBooking(
+        bookingId,
+        isPiSandbox() ? "Pi (Testnet · Test Pi)" : "Pi (Mainnet)",
+        result.amountPi,
+        {
+          status: "confirmed",
+          paymentId: result.paymentId,
+          txid: result.txid,
+        },
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Pi payment failed.");
     } finally {
@@ -208,13 +213,15 @@ export function Checkout() {
   return (
     <div className="page">
       <div className="shell page-hero checkout-hero">
-        <BrandLogo size="lg" />
+        <BrandLogo size="lg" withWordmark />
         <span className="eyebrow">Checkout</span>
-        <h1>Pay with Pi</h1>
+        <h1>{isPiSandbox() ? "Pay with Test Pi" : "Pay with Pi"}</h1>
         <p>
-          Production Mainnet. Fares are in INR; Pi is charged at GCV{" "}
-          <strong>{formatPiUsdRate()}</strong>
-          {" "}(catalog USD ÷ 314159; not market price).
+          {isPiSandbox()
+            ? "Testnet sandbox on this Grok host. Open in Pi Browser for Test Pi — desktop browsers may block the Pi Sandbox iframe."
+            : "Production Mainnet. Open in Pi Browser to complete payment."}{" "}
+          Fares are in INR; Pi is charged at GCV <strong>{formatPiUsdRate()}</strong>{" "}
+          (catalog USD ÷ 314159; not market price).
         </p>
         <Steps
           items={[
@@ -288,8 +295,12 @@ export function Checkout() {
               : isConnecting
                 ? "Checking Pi Browser…"
                 : canPayWithPi
-                  ? `Pay with Pi (${formatPi(amountPi)})`
-                  : "Pay with Pi (open in Pi Browser)"}
+                  ? isPiSandbox()
+                    ? `Pay with Test Pi (${formatPi(amountPi)})`
+                    : `Pay with Pi (${formatPi(amountPi)})`
+                  : isPiSandbox()
+                    ? "Pay with Test Pi (open in Pi Browser)"
+                    : "Pay with Pi (open in Pi Browser)"}
           </button>
 
           {canSandboxDemo && (

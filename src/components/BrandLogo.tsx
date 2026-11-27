@@ -23,13 +23,20 @@ export function BrandLogo({
     <span className={`brand-logo ${inverted ? "inverted" : ""} ${className}`.trim()}>
       <img
         src="/logo.jpg"
-        alt={withWordmark ? "" : "Shubham Holidays"}
+        alt={withWordmark ? "" : "शुभम हॉलीडेस · Shubham Holidays"}
         width={px}
         height={px}
         className="brand-logo-img"
         decoding="async"
       />
-      {withWordmark ? <span className="brand-logo-text">Shubham Holidays</span> : null}
+      {withWordmark ? (
+        <span className="brand-logo-wordmark">
+          <span className="brand-logo-text-mr" lang="mr">
+            शुभम हॉलीडेस
+          </span>
+          <span className="brand-logo-text">Shubham Holidays</span>
+        </span>
+      ) : null}
     </span>
   );
 }
