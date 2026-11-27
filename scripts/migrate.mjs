@@ -11,11 +11,18 @@ if (url === "" || files.length === 0) {
 }
 const client = new pg.Client({
   connectionString: process.env.DATABASE_URL_UNPOOLED?.trim() || url,
+  connectionTimeoutMillis: 20_000,
 });
 await client.connect();
+let locked = false;
 try {
-  await client.query("set lock_timeout = '60s'");
-  await client.query("select pg_advisory_lock(7272741)");
+  await client.query("set lock_timeout = '15s'");
+  const got = await client.query("select pg_try_advisory_lock(7272741) as ok");
+  locked = Boolean(got.rows[0]?.ok);
+  if (!locked) {
+    console.log("migrate: skipped (another migrate holds the lock)");
+    process.exit(0);
+  }
   await client.query(
     "create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())",
   );
@@ -34,6 +41,12 @@ try {
       throw error;
     }
   }
+  if (files.every((f) => done.has(f))) {
+    console.log("migrate: already up to date");
+  }
 } finally {
-  await client.end();
+  if (locked) {
+    await client.query("select pg_advisory_unlock(7272741)").catch(() => {});
+  }
+  await client.end().catch(() => {});
 }
