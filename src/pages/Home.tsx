@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BrandLogo } from "../components/BrandLogo";
 import { Nav } from "../components/Nav";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import {
@@ -70,10 +69,6 @@ export function Home() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="section shell mid-logo-section" aria-label="Shubham Holidays">
-        <BrandLogo size="lg" withWordmark />
       </section>
 
       <section className="section shell">
