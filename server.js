@@ -43,11 +43,22 @@ function readValidationKey(filename = "validation-key.txt") {
   return null;
 }
 
+function requestHosts(req) {
+  return [
+    req.hostname,
+    req.headers.host,
+    req.headers["x-forwarded-host"],
+  ]
+    .flatMap((h) => String(h || "").toLowerCase().split(","))
+    .map((h) => h.trim().split(":")[0])
+    .filter(Boolean);
+}
+
 function sendValidationKey(req, res) {
-  const host = String(req.hostname || req.headers.host || "").toLowerCase();
+  const hosts = requestHosts(req);
   // Testnet 01 (Grok) uses the Staging/sandbox ownership key; Mainnet keeps validation-key.txt.
-  const file =
-    host.endsWith("apps.grok.bot") ? "validation-key.sandbox.txt" : "validation-key.txt";
+  const onGrok = hosts.some((h) => h.endsWith("apps.grok.bot") || h.endsWith(".grok.bot"));
+  const file = onGrok ? "validation-key.sandbox.txt" : "validation-key.txt";
   const body = readValidationKey(file) || readValidationKey("validation-key.txt");
   if (!body) {
     res.status(404).type("text/plain").send("missing");
