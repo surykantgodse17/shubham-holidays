@@ -77,6 +77,20 @@ async function createApp() {
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
 
+  // Strip X-Frame-Options on every response (Pi Sandbox/Browser embed). Grok CDN may still inject its own.
+  app.use((req, res, next) => {
+    const originalWriteHead = res.writeHead;
+    res.writeHead = function (...args) {
+      try {
+        res.removeHeader("X-Frame-Options");
+      } catch {
+        /* ignore */
+      }
+      return originalWriteHead.apply(this, args);
+    };
+    next();
+  });
+
   // Pi ownership verify — register before JSON/CSP middleware.
   app.get("/validation-key.txt", sendValidationKey);
 
@@ -84,8 +98,10 @@ async function createApp() {
 
   app.use((req, res, next) => {
     if (req.path === "/validation-key.txt") return next();
+    // Pi Sandbox / Pi Browser embed parents (pinet.com, minepi.com). Never send X-Frame-Options.
     res.removeHeader("X-Frame-Options");
     res.setHeader("Content-Security-Policy", isProd ? PI_SANDBOX_CSP : PI_DEV_CSP);
+    res.setHeader("X-Content-Type-Options", "nosniff");
     next();
   });
 

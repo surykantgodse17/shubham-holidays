@@ -1,3 +1,6 @@
 {
-  "database": "postgres"
+  "database": "postgres",
+  "securityHeaders": {
+    "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://sdk.minepi.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; connect-src 'self' https://sdk.minepi.com https://api.minepi.com https://sandbox-api.minepi.com https://socialchain.app https://*.minepi.com; frame-src https://sdk.minepi.com https://app-cdn.minepi.com https://*.minepi.com; frame-ancestors 'self' https://*.pinet.com https://*.minepi.com; worker-src 'self' blob:"
+  }
 }
