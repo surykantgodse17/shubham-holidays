@@ -58,9 +58,11 @@ declare global {
 }
 
 const PI_AUTH_SCOPES = ["username", "payments", "wallet_address"];
-const LOAD_TIMEOUT_MS = 8_000;
-const INIT_TIMEOUT_MS = 4_000;
-const CONNECT_BUDGET_MS = 5_000;
+/** Pi SDK is ~1MB; Pi Browser / Sandbox on mobile often needs >5s. */
+const LOAD_TIMEOUT_MS = 20_000;
+const INIT_TIMEOUT_MS = 8_000;
+/** Must exceed LOAD + INIT — previous 5s budget caused false “Timed out connecting”. */
+const CONNECT_BUDGET_MS = 30_000;
 const AUTH_TIMEOUT_MS = 45_000;
 const PAY_TIMEOUT_MS = 120_000;
 
@@ -124,14 +126,43 @@ export function formatInrPiGcv(inr: number): string {
   return `${rupees} = ${pi} Pi (${PI_USD_RATE_COPY})`;
 }
 
+/** True when framed by PiNet / Pi Sandbox (desktop Sandbox UA is often not PiBrowser). */
+function framedByPiHost(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const origins = window.location.ancestorOrigins;
+    if (origins && origins.length > 0) {
+      for (let i = 0; i < origins.length; i++) {
+        if (/\.pinet\.com$|\.minepi\.com$|^https:\/\/minepi\.com$/i.test(origins[i])) {
+          return true;
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (window.self !== window.top) {
+      const ref = String(document.referrer || "");
+      if (/\.pinet\.com|\.minepi\.com/i.test(ref)) return true;
+      // Cross-origin parent with empty referrer — still likely Pi embed when sandbox host.
+      if (!ref && isPiSandbox()) return true;
+    }
+  } catch {
+    // Cross-origin frame access threw → we are embedded; treat as Pi when sandbox.
+    return isPiSandbox();
+  }
+  return false;
+}
+
 /**
- * Strict Pi Browser detection — UA only.
- * Do not treat `window.piNetwork` / other hosts as Pi Browser; that false-positive
- * path called Pi.init() and left users stuck on “Connecting to Pi SDK”.
+ * Pi Browser UA, or PiNet / Sandbox iframe embed.
+ * Do not treat bare `window.piNetwork` as Pi — that false-positive hung on Connecting.
  */
 export function inPiBrowser(): boolean {
   if (typeof navigator === "undefined") return false;
-  return /PiBrowser/i.test(navigator.userAgent || "");
+  if (/PiBrowser/i.test(navigator.userAgent || "")) return true;
+  return framedByPiHost();
 }
 
 /**
@@ -143,7 +174,8 @@ function isTestnet02Host(host: string): boolean {
   return (
     host === "shubham-holidays.vercel.app" ||
     host.endsWith(".shubham-holidays.vercel.app") ||
-    host.includes("shubham-holidays-testnet-02")
+    host.includes("shubham-holidays-testnet-02") ||
+    host === "shubhamholidaysf2001.pinet.com"
   );
 }
 
