@@ -328,43 +328,6 @@ export const internationalPackages: InternationalPackage[] = [
       "Sunway Lagoon",
     ],
   },
-  {
-    id: "intl-bali",
-    title: "Indonesia · Bali",
-    place: "Bali",
-    duration: "4N / 5D",
-    price: 69999,
-    image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1000&q=80",
-    inclusions: [
-      "Flight",
-      "4-Star Hotel with Pool",
-      "Breakfast",
-      "Visa on Arrival",
-      "Kintamani Tour",
-      "Uluwatu Temple",
-      "Water Sports",
-      "Nusa Penida Day Trip",
-    ],
-  },
-  {
-    id: "intl-sg-my",
-    title: "Singapore + Malaysia Combo",
-    place: "Singapore · Malaysia",
-    duration: "6N / 7D",
-    price: 89999,
-    image: "https://images.unsplash.com/photo-1565967511849-76a60a69caff?auto=format&fit=crop&w=1000&q=80",
-    inclusions: [
-      "Flight",
-      "Hotels in Both Countries",
-      "Breakfast",
-      "Visa",
-      "Universal Studios",
-      "Sentosa",
-      "Kuala Lumpur Tour",
-      "Genting Highlands",
-      "Cruise Transfer",
-    ],
-  },
 ];
 
 /** WhatsApp booking link for package cards. */
