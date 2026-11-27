@@ -36,7 +36,7 @@ export function Home() {
   return (
     <div className="page">
       <section className="hero" aria-label="शुभम हॉलीडेस · Shubham Holidays hero">
-        <div className="hero-media" role="img" aria-label="Travelers exploring a coastal destination" />
+        <div className="hero-media" role="img" aria-label="Mountain lake journey at golden hour" />
         <div className="hero-content">
           <div className="hero-brand-block">
             <img

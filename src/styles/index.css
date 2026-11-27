@@ -250,15 +250,12 @@ p {
 
 .hero-logo {
   display: block;
-  height: 64px;
+  height: 58px;
   width: auto;
-  max-width: min(68vw, 240px);
+  max-width: min(68vw, 220px);
   object-fit: contain;
   object-position: left center;
-  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.35));
-  background: rgba(255, 255, 255, 0.92);
-  padding: 0.45rem 0.65rem;
-  border-radius: 0.75rem;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.4));
 }
 
 .hero-brand-mr {
