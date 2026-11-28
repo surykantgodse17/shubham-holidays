@@ -14,15 +14,16 @@ export function Footer() {
         <div className="footer-brand">
           <img
             src="/logo-full.png"
-            alt="Shubham Holidays"
+            alt="शुभम हॉलीडेस · Shubham Holidays"
             className="footer-logo"
-            width={160}
-            height={70}
+            width={200}
+            height={88}
             decoding="async"
           />
-          <p className="footer-brand-name">Shubham Holidays</p>
+          <p className="footer-brand-name">शुभम हॉलीडेस</p>
+          <p className="footer-brand-name-en">Shubham Holidays</p>
           <p className="footer-tagline">
-            Book Flights &amp; Hotels with Pi. Fast, Secure &amp; Easy Booking with Pi Payment.
+            Book flights and hotels with Pi — fast, secure, and easy.
           </p>
         </div>
         <div className="footer-links">

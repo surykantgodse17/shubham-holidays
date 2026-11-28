@@ -15,8 +15,8 @@ import {
 
 type Tab = "flights" | "hotels" | "explore";
 
-const HERO_DESCRIPTION =
-  "Book Flights & Hotels with Pi. Fast, Secure & Easy Booking with Pi Payment.";
+const HERO_SUPPORT =
+  "Book flights and hotels with Pi — fast, secure, and easy.";
 
 export function Home() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export function Home() {
         <div
           className="hero-media hero-media-mainnet02"
           role="img"
-          aria-label="Airplane flying over snow-capped mountain peaks above the clouds"
+          aria-label="Airplane flying over a golden-hour turquoise coastline"
         />
         <div className="hero-overlay hero-overlay-ref">
           <Nav overHero />
@@ -53,13 +53,15 @@ export function Home() {
               src="/logo-full.png"
               alt=""
               className="hero-copy-logo"
-              width={160}
-              height={70}
+              width={200}
+              height={88}
               decoding="async"
             />
-            <h1 className="hero-copy-brand">Shubham Holidays</h1>
-            <p className="hero-copy-lead">Travel that feels considered</p>
-            <p className="hero-copy-desc">{HERO_DESCRIPTION}</p>
+            <h1 className="hero-copy-brand">
+              <span className="hero-copy-brand-mr">शुभम हॉलीडेस</span>
+              <span className="hero-copy-brand-en">Shubham Holidays</span>
+            </h1>
+            <p className="hero-copy-desc">{HERO_SUPPORT}</p>
             <div className="hero-actions">
               <Link to="/flights" className="btn btn-primary">
                 Search flights
@@ -70,6 +72,17 @@ export function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="section shell mid-logo-section" aria-label="Shubham Holidays">
+        <img
+          src="/logo-full.png"
+          alt="Shubham Holidays"
+          className="mid-logo"
+          width={220}
+          height={96}
+          decoding="async"
+        />
       </section>
 
       <section className="section shell">
