@@ -449,17 +449,20 @@ p {
   gap: 0.25rem;
 }
 
-.nav-links a {
+.nav-links a,
+.nav-links .nav-packages-link {
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
   font-size: 0.92rem;
   font-weight: 500;
   color: var(--ink-soft);
   transition: background 0.2s var(--ease), color 0.2s var(--ease);
+  cursor: pointer;
 }
 
 .nav-links a:hover,
-.nav-links a.active {
+.nav-links a.active,
+.nav-links .nav-packages-link:hover {
   color: var(--sea-deep);
   background: rgba(26, 107, 92, 0.08);
 }

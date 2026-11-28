@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Nav } from "../components/Nav";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import {
@@ -19,12 +19,22 @@ const HERO_DESCRIPTION =
 
 export function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [tab, setTab] = useState<Tab>("flights");
   const [from, setFrom] = useState("DEL");
   const [to, setTo] = useState("GOI");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [city, setCity] = useState("GOI");
   const [guests, setGuests] = useState("2");
+
+  useEffect(() => {
+    const state = location.state as { scrollTo?: string } | null;
+    if (state?.scrollTo !== "packages") return;
+    const t = window.setTimeout(() => {
+      document.getElementById("home-packages")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [location.state]);
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
@@ -230,7 +240,7 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section shell" aria-labelledby="domestic-packages-heading">
+      <section className="section shell" id="home-packages" aria-labelledby="domestic-packages-heading">
         <div className="section-head">
           <span className="eyebrow">India</span>
           <h2 id="domestic-packages-heading">Domestic Packages</h2>

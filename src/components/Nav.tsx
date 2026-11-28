@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import type { MouseEvent } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 type NavProps = {
   /** On the home page the header sits under the hero photo. */
@@ -8,9 +9,15 @@ type NavProps = {
   overHero?: boolean;
 };
 
+function scrollToHomePackages() {
+  document.getElementById("home-packages")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export function Nav({ belowHero = false, overHero = false }: NavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -18,6 +25,16 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  function goPackages(e: MouseEvent) {
+    e.preventDefault();
+    setOpen(false);
+    if (location.pathname === "/") {
+      scrollToHomePackages();
+      return;
+    }
+    navigate("/", { state: { scrollTo: "packages" } });
+  }
 
   return (
     <header
@@ -56,6 +73,9 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
           <NavLink to="/hotels" onClick={() => setOpen(false)}>
             Hotels
           </NavLink>
+          <a href="/#/" className="nav-packages-link" onClick={goPackages}>
+            Packages
+          </a>
           <NavLink to="/explore" onClick={() => setOpen(false)}>
             Explore
           </NavLink>
