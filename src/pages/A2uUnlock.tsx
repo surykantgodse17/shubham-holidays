@@ -11,6 +11,8 @@ type A2uStatus = {
   met: boolean;
   amountPi: number;
   incompleteCount: number;
+  seedLooksValid?: boolean;
+  incompleteError?: string;
   recent?: Array<{
     username: string;
     uidShort: string;
@@ -176,12 +178,15 @@ export function A2uUnlock() {
               Server A2U is not enabled yet. Add Vercel env on project{" "}
               <code>shubham-holidays-testnet-02</code>: <code>PI_A2U_ENABLED=true</code>, Staging{" "}
               <code>PI_NETWORK_API_KEY</code>, and <code>PI_WALLET_PRIVATE_SEED</code> (wallet seed starting
-              with S). Redeploy, then retry.
+              with S, 56 chars). Redeploy, then retry.
             </p>
           ) : (
             <p className="ink-soft text-092">
               Each claim sends ~{status.amountPi} Test Pi from the Staging app wallet to the signed-in user.
               One claim per Pi uid.
+              {status.seedLooksValid === false
+                ? " Warning: wallet seed is set but does not look like a valid 56-char S… seed."
+                : null}
             </p>
           )}
 

@@ -32,10 +32,15 @@ export async function POST(request) {
       return Response.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
     }
     const status = err?.status || 500;
-    const safe =
-      status === 401 || status === 400 || status === 403 || status === 409 || status === 503
-        ? err.message
-        : "A2U payout failed.";
+    const pass =
+      status === 401 ||
+      status === 400 ||
+      status === 402 ||
+      status === 403 ||
+      status === 409 ||
+      status === 502 ||
+      status === 503;
+    const safe = pass && err?.message ? err.message : "A2U payout failed.";
     return Response.json({ ok: false, error: safe }, { status });
   }
 }
