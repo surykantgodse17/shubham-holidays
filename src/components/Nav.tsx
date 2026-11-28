@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useI18n } from "../i18n/I18nProvider";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 type NavProps = {
   /** On the home page the header sits under the hero photo. */
@@ -18,6 +20,7 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -53,41 +56,44 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
             />
             <span className="site-brand-text">SHUBHAM HOLIDAYS</span>
           </Link>
-          <button
-            className="menu-btn"
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <span />
-          </button>
+          <div className="nav-brand-actions">
+            <LanguageSwitcher overHero={overHero} />
+            <button
+              className="menu-btn"
+              aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            >
+              <span />
+            </button>
+          </div>
         </div>
 
         <nav className={`nav-links${open ? " open" : ""}`} aria-label="Primary">
           <NavLink to="/" end onClick={() => setOpen(false)}>
-            Home
+            {t("nav.home")}
           </NavLink>
           <NavLink to="/flights" onClick={() => setOpen(false)}>
-            Flights
+            {t("nav.flights")}
           </NavLink>
           <NavLink to="/hotels" onClick={() => setOpen(false)}>
-            Hotels
+            {t("nav.hotels")}
           </NavLink>
           <a href="/#/" className="nav-packages-link" onClick={goPackages}>
-            Packages
+            {t("nav.packages")}
           </a>
           <NavLink to="/explore" onClick={() => setOpen(false)}>
-            Explore
+            {t("nav.explore")}
           </NavLink>
           <NavLink to="/bookings" onClick={() => setOpen(false)}>
-            My bookings
+            {t("nav.bookings")}
           </NavLink>
           <NavLink to="/contact" onClick={() => setOpen(false)}>
-            Contact
+            {t("nav.contact")}
           </NavLink>
           {overHero ? (
             <Link to="/flights" className="btn btn-primary nav-cta" onClick={() => setOpen(false)}>
-              Plan a trip
+              {t("nav.planTrip")}
             </Link>
           ) : null}
         </nav>

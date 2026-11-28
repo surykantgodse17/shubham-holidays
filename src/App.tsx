@@ -17,6 +17,7 @@ import { Contact } from "./pages/Contact";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
+import { I18nProvider } from "./i18n/I18nProvider";
 
 function AppChrome() {
   const { pathname } = useLocation();
@@ -51,8 +52,10 @@ function AppChrome() {
 
 export default function App() {
   return (
-    <HashRouter>
-      <AppChrome />
-    </HashRouter>
+    <I18nProvider>
+      <HashRouter>
+        <AppChrome />
+      </HashRouter>
+    </I18nProvider>
   );
 }

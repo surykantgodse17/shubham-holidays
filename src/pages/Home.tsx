@@ -11,21 +11,27 @@ import {
   internationalPackages,
   pilgrimageDestinations,
 } from "../data/mock";
+import { useI18n } from "../i18n/I18nProvider";
+import type { MessageKey } from "../i18n/messages";
 
 type Tab = "flights" | "hotels" | "explore";
-
-const HERO_DESCRIPTION =
-  "Book Flights & Hotels with Pi. Fast, Secure & Easy Booking with Pi Payment.";
 
 export function Home() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("flights");
   const [from, setFrom] = useState("DEL");
   const [to, setTo] = useState("GOI");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [city, setCity] = useState("GOI");
   const [guests, setGuests] = useState("2");
+
+  const searchTabs: { id: Tab; labelKey: MessageKey }[] = [
+    { id: "flights", labelKey: "search.flights" },
+    { id: "hotels", labelKey: "search.hotels" },
+    { id: "explore", labelKey: "search.packages" },
+  ];
 
   useEffect(() => {
     const state = location.state as { scrollTo?: string } | null;
@@ -67,14 +73,14 @@ export function Home() {
               decoding="async"
             />
             <h1 className="hero-copy-brand">Shubham Holidays</h1>
-            <p className="hero-copy-lead">Travel that feels considered</p>
-            <p className="hero-copy-desc">{HERO_DESCRIPTION}</p>
+            <p className="hero-copy-lead">{t("hero.tagline")}</p>
+            <p className="hero-copy-desc">{t("hero.desc")}</p>
             <div className="hero-actions">
               <Link to="/flights" className="btn btn-primary">
-                Search flights
+                {t("hero.searchFlights")}
               </Link>
               <Link to="/hotels" className="btn btn-sea">
-                Search hotel
+                {t("hero.searchHotel")}
               </Link>
             </div>
           </div>
@@ -83,14 +89,8 @@ export function Home() {
 
       <section className="section shell">
         <form className="search-panel" onSubmit={onSearch}>
-          <div className="search-tabs" role="tablist" aria-label="Search type">
-            {(
-              [
-                ["flights", "Flights"],
-                ["hotels", "Hotels"],
-                ["explore", "Packages"],
-              ] as const
-            ).map(([id, label]) => (
+          <div className="search-tabs" role="tablist" aria-label={t("search.type")}>
+            {searchTabs.map(({ id, labelKey }) => (
               <button
                 key={id}
                 type="button"
@@ -98,7 +98,7 @@ export function Home() {
                 aria-selected={tab === id}
                 onClick={() => setTab(id)}
               >
-                {label}
+                {t(labelKey)}
               </button>
             ))}
           </div>
@@ -204,16 +204,16 @@ export function Home() {
 
       <section className="section shell" id="home-packages" aria-labelledby="domestic-packages-heading">
         <div className="section-head">
-          <span className="eyebrow">India</span>
-          <h2 id="domestic-packages-heading">Domestic Packages</h2>
-          <p>Curated journeys across India — same calm booking flow from browse to confirm.</p>
+          <span className="eyebrow">{t("section.domestic.eyebrow")}</span>
+          <h2 id="domestic-packages-heading">{t("section.domestic.title")}</h2>
+          <p>{t("section.domestic.lead")}</p>
         </div>
         <div className="listing-grid">
           {domesticPackages.map((pkg) => (
             <Link key={pkg.id} to={`/explore/${pkg.id}`} className="listing-card">
               <img src={pkg.image} alt="" loading="lazy" />
               <div className="listing-body">
-                <span className="listing-tag">Domestic</span>
+                <span className="listing-tag">{t("tag.domestic")}</span>
                 <h3>{pkg.title}</h3>
                 <p className="ink-soft text-092">
                   {pkg.place} · {pkg.duration}
@@ -223,7 +223,7 @@ export function Home() {
                     <strong className="listing-price-label">{formatINR(pkg.price)}</strong>
                     <PiGcvPrice inr={pkg.price} />
                   </div>
-                  <span className="btn-text">View →</span>
+                  <span className="btn-text">{t("cta.view")}</span>
                 </div>
               </div>
             </Link>
@@ -233,9 +233,9 @@ export function Home() {
 
       <section className="section shell" aria-labelledby="pilgrimage-heading">
         <div className="section-head">
-          <span className="eyebrow">Faith · India</span>
-          <h2 id="pilgrimage-heading">Indian Pilgrimage Circuit</h2>
-          <p>Sacred towns across India — pick a shrine and we’ll arrange darshan, stays, and calm travel.</p>
+          <span className="eyebrow">{t("section.pilgrimage.eyebrow")}</span>
+          <h2 id="pilgrimage-heading">{t("section.pilgrimage.title")}</h2>
+          <p>{t("section.pilgrimage.lead")}</p>
         </div>
         <div className="strip strip-pilgrimage">
           {pilgrimageDestinations.map((d) => (
@@ -252,9 +252,9 @@ export function Home() {
 
       <section className="section shell">
         <div className="section-head">
-          <span className="eyebrow">Where to next</span>
-          <h2>Destinations with room to breathe</h2>
-          <p>Soft coasts, green shade, and high ridges — pick a mood and we’ll take it from search to booking.</p>
+          <span className="eyebrow">{t("section.destinations.eyebrow")}</span>
+          <h2>{t("section.destinations.title")}</h2>
+          <p>{t("section.destinations.lead")}</p>
         </div>
         <div className="strip">
           {destinations.map((d) => (
@@ -271,16 +271,16 @@ export function Home() {
 
       <section className="section shell" aria-labelledby="international-packages-heading">
         <div className="section-head">
-          <span className="eyebrow">Abroad</span>
-          <h2 id="international-packages-heading">International Tour Packages</h2>
-          <p>Handpicked getaways with flights, hotels, visas, and sightseeing — book in-app and pay with Pi.</p>
+          <span className="eyebrow">{t("section.international.eyebrow")}</span>
+          <h2 id="international-packages-heading">{t("section.international.title")}</h2>
+          <p>{t("section.international.lead")}</p>
         </div>
         <div className="listing-grid">
           {internationalPackages.map((pkg) => (
             <Link key={pkg.id} to={`/explore/${pkg.id}`} className="listing-card">
               <img src={pkg.image} alt="" loading="lazy" />
               <div className="listing-body">
-                <span className="listing-tag listing-tag-intl">International</span>
+                <span className="listing-tag listing-tag-intl">{t("tag.international")}</span>
                 <h3>{pkg.title}</h3>
                 <p className="ink-soft text-092">
                   {pkg.place} · {pkg.duration}
@@ -294,11 +294,11 @@ export function Home() {
                   <div className="listing-price-block">
                     <strong className="listing-price-label">
                       {formatINR(pkg.price)}
-                      <span className="price-pp"> /- per person</span>
+                      <span className="price-pp">{t("price.perPerson")}</span>
                     </strong>
                     <PiGcvPrice inr={pkg.price} />
                   </div>
-                  <span className="btn btn-sea">View details</span>
+                  <span className="btn btn-sea">{t("cta.viewDetails")}</span>
                 </div>
               </div>
             </Link>

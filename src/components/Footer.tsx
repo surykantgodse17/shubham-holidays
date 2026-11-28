@@ -6,8 +6,11 @@ import {
   CONTACT_TEL,
   CONTACT_WHATSAPP_URL,
 } from "../lib/contact";
+import { useI18n } from "../i18n/I18nProvider";
 
 export function Footer() {
+  const { t } = useI18n();
+
   return (
     <footer className="footer">
       <div className="shell footer-inner">
@@ -21,21 +24,19 @@ export function Footer() {
             decoding="async"
           />
           <p className="footer-brand-name">Shubham Holidays</p>
-          <p className="footer-tagline">
-            Book Flights &amp; Hotels with Pi. Fast, Secure &amp; Easy Booking with Pi Payment.
-          </p>
+          <p className="footer-tagline">{t("footer.tagline")}</p>
         </div>
         <div className="footer-links">
-          <Link to="/flights">Flights</Link>
-          <Link to="/hotels">Hotels</Link>
-          <Link to="/explore">Explore</Link>
-          <Link to="/bookings">Bookings</Link>
-          <Link to="/contact">Contact</Link>
-          <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/terms">Terms of Service</Link>
+          <Link to="/flights">{t("nav.flights")}</Link>
+          <Link to="/hotels">{t("nav.hotels")}</Link>
+          <Link to="/explore">{t("nav.explore")}</Link>
+          <Link to="/bookings">{t("footer.bookings")}</Link>
+          <Link to="/contact">{t("nav.contact")}</Link>
+          <Link to="/privacy">{t("footer.privacy")}</Link>
+          <Link to="/terms">{t("footer.terms")}</Link>
         </div>
         <div className="footer-contact">
-          <h3 className="footer-contact-title">Contact</h3>
+          <h3 className="footer-contact-title">{t("footer.contact")}</h3>
           <a className="footer-contact-link" href={CONTACT_MAILTO}>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
               <rect x="3" y="5" width="18" height="14" rx="2" />
