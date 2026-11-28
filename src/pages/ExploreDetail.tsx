@@ -1,14 +1,14 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { formatINR, listings } from "../data/mock";
+import { findBookablePackage, formatINR } from "../data/mock";
 import { PiGcvPrice } from "../components/PiGcvPrice";
 import { setCart } from "../lib/storage";
 
 export function ExploreDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const listing = listings.find((l) => l.id === id);
+  const listing = id ? findBookablePackage(id) : null;
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [guests, setGuests] = useState("2");
   const [name, setName] = useState("");
@@ -73,10 +73,16 @@ export function ExploreDetail() {
           <div className="panel">
             <h2>About</h2>
             <p className="ink-soft line-1-65">{listing.description}</p>
-            <p className="sample-banner">
-              <span className="badge badge-sample">Sample listing</span>
-              Partner and experience inventory is mocked for this demo.
-            </p>
+            {listing.id.startsWith("intl-") ? (
+              <p className="ink-soft line-1-65 mt-085">
+                Book in-app and pay with Pi at checkout. Sample tour inventory for this demo.
+              </p>
+            ) : (
+              <p className="sample-banner">
+                <span className="badge badge-sample">Sample listing</span>
+                Partner and experience inventory is mocked for this demo.
+              </p>
+            )}
           </div>
 
           <form className="panel" onSubmit={onBook}>

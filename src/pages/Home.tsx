@@ -10,7 +10,6 @@ import {
   formatINR,
   internationalPackages,
   pilgrimageDestinations,
-  whatsappBookUrl,
 } from "../data/mock";
 
 type Tab = "flights" | "hotels" | "explore";
@@ -264,7 +263,7 @@ export function Home() {
         <div className="section-head">
           <span className="eyebrow">Abroad</span>
           <h2 id="international-packages-heading">International Tour Packages</h2>
-          <p>Handpicked getaways with flights, hotels, visas, and sightseeing — book on WhatsApp.</p>
+          <p>Handpicked getaways with flights, hotels, visas, and sightseeing — book in-app and pay with Pi.</p>
         </div>
         <div className="listing-grid">
           {internationalPackages.map((pkg) => (
@@ -289,14 +288,9 @@ export function Home() {
                     </strong>
                     <PiGcvPrice inr={pkg.price} />
                   </div>
-                  <a
-                    className="btn btn-sea btn-whatsapp"
-                    href={whatsappBookUrl(pkg.title, pkg.duration, pkg.price)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <Link to={`/explore/${pkg.id}`} className="btn btn-sea">
                     Book Now
-                  </a>
+                  </Link>
                 </div>
               </div>
             </article>

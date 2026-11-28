@@ -469,7 +469,26 @@ export const internationalPackages: InternationalPackage[] = [
   },
 ];
 
-/** WhatsApp booking link for package cards. */
+/** Resolve domestic listings or international packages for the in-app book → checkout flow. */
+export function findBookablePackage(id: string): Listing | null {
+  const listing = listings.find((l) => l.id === id);
+  if (listing) return listing;
+  const intl = internationalPackages.find((p) => p.id === id);
+  if (!intl) return null;
+  return {
+    id: intl.id,
+    title: intl.title,
+    type: "Package",
+    place: intl.place,
+    duration: intl.duration,
+    price: intl.price,
+    image: intl.image,
+    highlights: intl.inclusions.slice(0, 5),
+    description: `${intl.title} · ${intl.place} · ${intl.duration}. Includes ${intl.inclusions.join(", ")}.`,
+  };
+}
+
+/** WhatsApp booking link (contact / floating widget only — not package Book Now). */
 export function whatsappBookUrl(packageTitle: string, duration: string, price: number): string {
   const text = `Hi Shubham Holidays, I'd like to book: ${packageTitle} (${duration}) — ${formatINR(price)} per person.`;
   return `https://wa.me/919372010677?text=${encodeURIComponent(text)}`;
