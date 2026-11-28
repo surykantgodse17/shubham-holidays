@@ -259,6 +259,26 @@ export const listings: Listing[] = [
     description: "Turquoise water, soft sand, and island hopping — Andaman without the planning stress.",
   },
   {
+    id: "l11",
+    title: "Golden Triangle Classic",
+    type: "Package",
+    place: "Delhi · Agra · Jaipur",
+    duration: "5 nights",
+    price: 48900,
+    image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80",
+    highlights: [
+      "4-star hotels",
+      "Taj Mahal sunrise",
+      "Private AC car",
+      "Delhi city tour",
+      "Amber Fort",
+      "Breakfast daily",
+      "Airport transfers",
+    ],
+    description:
+      "India’s iconic circuit — Old Delhi lanes, Taj at first light, and Jaipur’s forts with a private car and calm 4-star stays.",
+  },
+  {
     id: "l5",
     title: "Andaman Reef Snorkel",
     type: "Experience",
