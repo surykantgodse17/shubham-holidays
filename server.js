@@ -7,6 +7,7 @@ import { approvePayment, completePayment, requirePiCaller } from "./server/payme
 import { createOrderTicket } from "./server/orders.js";
 import { sanitizeBookingMeta } from "./server/bookings.js";
 import { createCheckoutSession, consumeCheckoutSession } from "./server/checkout.js";
+import { claimA2uPayout, getA2uStatus, resolveIncompleteA2u } from "./server/a2u.js";
 import {
   rateLimit,
   sameAppOrigin,
@@ -266,6 +267,49 @@ async function createApp() {
         status === 401 || status === 400 || status === 403 || status === 503
           ? err.message
           : "Payment completion failed.";
+      res.status(status).json({ ok: false, error: safe });
+    }
+  });
+
+  /** Staging A2U — one Test Pi payout per unique Pi user (unlock Mainnet wallet Apply). */
+  app.get("/api/a2u/status", ...protect, async (_req, res) => {
+    try {
+      const data = await getA2uStatus();
+      res.json({ ok: true, ...data });
+    } catch (err) {
+      const status = err?.status || 500;
+      res.status(status).json({
+        ok: false,
+        error: status === 503 ? err.message : "Could not load A2U status.",
+      });
+    }
+  });
+
+  app.post("/api/a2u/claim", ...protectPay, async (req, res) => {
+    try {
+      const caller = await requirePiCaller(req.headers.authorization, req.headers.host || "");
+      const data = await claimA2uPayout(caller);
+      res.json(data);
+    } catch (err) {
+      const status = err?.status || 500;
+      const safe =
+        status === 401 || status === 400 || status === 403 || status === 409 || status === 503
+          ? err.message
+          : "A2U payout failed.";
+      res.status(status).json({ ok: false, error: safe });
+    }
+  });
+
+  app.post("/api/a2u/resolve", ...protectPay, async (_req, res) => {
+    try {
+      const data = await resolveIncompleteA2u();
+      res.json(data);
+    } catch (err) {
+      const status = err?.status || 500;
+      const safe =
+        status === 401 || status === 400 || status === 403 || status === 503
+          ? err.message
+          : "Could not resolve incomplete A2U payments.";
       res.status(status).json({ ok: false, error: safe });
     }
   });

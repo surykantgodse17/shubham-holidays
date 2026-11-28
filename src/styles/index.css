@@ -1403,6 +1403,45 @@ p {
   color: var(--sea-deep);
 }
 
+.a2u-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(15, 110, 117, 0.22);
+  background:
+    linear-gradient(135deg, rgba(15, 110, 117, 0.1), rgba(201, 137, 42, 0.08)),
+    var(--white);
+  box-shadow: var(--shadow);
+}
+
+.a2u-banner h2 {
+  margin: 0.2rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  color: var(--sea-deep);
+}
+
+.a2u-banner p {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--ink-soft);
+}
+
+.nav-links a.nav-test-pi {
+  color: var(--amber-hot);
+  font-weight: 700;
+}
+
+.success-text {
+  color: var(--success);
+  font-size: 0.95rem;
+  margin: 0.65rem 0 0;
+}
+
 .error-text {
   color: var(--danger);
   font-size: 0.85rem;

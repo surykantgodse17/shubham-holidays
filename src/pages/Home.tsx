@@ -10,6 +10,7 @@ import {
   internationalPackages,
   whatsappBookUrl,
 } from "../data/mock";
+import { isPiSandbox } from "../lib/pi";
 
 type Tab = "flights" | "hotels" | "explore";
 
@@ -21,6 +22,7 @@ export function Home() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [city, setCity] = useState("GOI");
   const [guests, setGuests] = useState("2");
+  const showTestPi = isPiSandbox();
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
@@ -40,6 +42,24 @@ export function Home() {
       </section>
 
       <Nav belowHero />
+
+      {showTestPi ? (
+        <section className="section shell" aria-labelledby="test-pi-a2u-heading">
+          <div className="a2u-banner">
+            <div>
+              <span className="eyebrow">Staging · Test Pi</span>
+              <h2 id="test-pi-a2u-heading">Test Pi App-to-User (A2U)</h2>
+              <p>
+                Complete 5 unique wallet A2U payouts here to unlock Mainnet wallet Apply. Open in Pi
+                Browser — Sign in with Pi, then receive Test Pi.
+              </p>
+            </div>
+            <Link to="/a2u" className="btn btn-primary">
+              Open Test Pi A2U
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <section className="section shell">
         <form className="search-panel" onSubmit={onSearch}>

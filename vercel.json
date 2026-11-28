@@ -17,6 +17,9 @@
     { "source": "/api/checkout/sessions", "destination": "/api/checkout/sessions" },
     { "source": "/api/payments/approve", "destination": "/api/payments/approve" },
     { "source": "/api/payments/complete", "destination": "/api/payments/complete" },
+    { "source": "/api/a2u/status", "destination": "/api/a2u/status" },
+    { "source": "/api/a2u/claim", "destination": "/api/a2u/claim" },
+    { "source": "/api/a2u/resolve", "destination": "/api/a2u/resolve" },
     { "source": "/((?!api/|validation-key\\.txt$).*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -17,6 +17,7 @@ import { Contact } from "./pages/Contact";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import { FloatingWhatsApp } from "./components/FloatingWhatsApp";
+import { A2uUnlock } from "./pages/A2uUnlock";
 
 function AppChrome() {
   const { pathname } = useLocation();
@@ -36,6 +37,7 @@ function AppChrome() {
         <Route path="/explore" element={<Explore />} />
         <Route path="/explore/:id" element={<ExploreDetail />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/a2u" element={<A2uUnlock />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/contact" element={<Contact />} />

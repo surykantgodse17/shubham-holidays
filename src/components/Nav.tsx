@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { isPiSandbox } from "../lib/pi";
 
 type NavProps = {
   /** On the home page the header sits under the hero photo. */
@@ -9,6 +10,7 @@ type NavProps = {
 export function Nav({ belowHero = false }: NavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const showTestPi = isPiSandbox();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -58,6 +60,11 @@ export function Nav({ belowHero = false }: NavProps) {
           <NavLink to="/bookings" onClick={() => setOpen(false)}>
             My bookings
           </NavLink>
+          {showTestPi ? (
+            <NavLink to="/a2u" className="nav-test-pi" onClick={() => setOpen(false)}>
+              Test Pi A2U
+            </NavLink>
+          ) : null}
           <NavLink to="/contact" onClick={() => setOpen(false)}>
             Contact
           </NavLink>

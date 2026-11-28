@@ -6,8 +6,11 @@ import {
   CONTACT_TEL,
   CONTACT_WHATSAPP_URL,
 } from "../lib/contact";
+import { isPiSandbox } from "../lib/pi";
 
 export function Footer() {
+  const showTestPi = isPiSandbox();
+
   return (
     <footer className="footer">
       <div className="shell footer-inner">
@@ -28,6 +31,7 @@ export function Footer() {
           <Link to="/hotels">Hotels</Link>
           <Link to="/explore">Explore</Link>
           <Link to="/bookings">Bookings</Link>
+          {showTestPi ? <Link to="/a2u">Test Pi A2U</Link> : null}
           <Link to="/contact">Contact</Link>
           <Link to="/privacy">Privacy Policy</Link>
           <Link to="/terms">Terms of Service</Link>

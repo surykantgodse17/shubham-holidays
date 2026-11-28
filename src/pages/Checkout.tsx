@@ -296,6 +296,15 @@ export function Checkout() {
                     : "Pay with Pi (open in Pi Browser)"}
           </button>
 
+          {isPiSandbox() ? (
+            <p className="pay-note mt-085">
+              Need Staging <strong>App-to-User</strong> for 5 unique wallets?{" "}
+              <Link to="/a2u" className="btn-text">
+                Open Test Pi A2U →
+              </Link>
+            </p>
+          ) : null}
+
           {canSandboxDemo && (
             <div className="demo-pay-block">
               <p className="demo-pay-warning">
