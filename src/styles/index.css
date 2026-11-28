@@ -143,9 +143,10 @@ p {
 .nav.nav-over-hero .site-brand-text {
   color: var(--sea-deep);
   text-shadow: none;
-  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
-  text-transform: none;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .nav.nav-over-hero .nav-stack {
@@ -232,9 +233,9 @@ p {
 
 .site-brand-text {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: clamp(1.35rem, 4.5vw, 2.4rem);
-  letter-spacing: -0.04em;
+  letter-spacing: 0.04em;
   line-height: 1.02;
   text-transform: uppercase;
   text-wrap: balance;
@@ -666,15 +667,16 @@ p {
 }
 
 .hero-copy-brand {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(2.4rem, 7vw, 4.25rem);
-  letter-spacing: -0.045em;
-  line-height: 0.98;
+  /* Syne — distinct from nav Fraunces */
+  font-family: "Syne", var(--font-body), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.35rem, 6.5vw, 4rem);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
   color: #fff;
   text-shadow: 0 4px 28px rgba(0, 0, 0, 0.4);
   margin: 0 0 0.65rem;
-  max-width: 12ch;
+  max-width: 14ch;
 }
 
 .hero-copy-lead {
