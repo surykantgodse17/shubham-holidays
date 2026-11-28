@@ -30,11 +30,11 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
               src="/logo-full.png"
               alt=""
               className="site-brand-logo"
-              width={68}
-              height={68}
+              width={56}
+              height={56}
               decoding="async"
             />
-            <span className="site-brand-text">शुभम हॉलीडेस</span>
+            <span className="site-brand-text">SHUBHAM HOLIDAYS</span>
           </Link>
           <button
             className="menu-btn"
