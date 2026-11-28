@@ -202,19 +202,29 @@ export function Home() {
         </form>
       </section>
 
-      <section className="section shell">
+      <section className="section shell" id="home-packages" aria-labelledby="domestic-packages-heading">
         <div className="section-head">
-          <span className="eyebrow">Where to next</span>
-          <h2>Destinations with room to breathe</h2>
-          <p>Soft coasts, green shade, and high ridges — pick a mood and we’ll take it from search to booking.</p>
+          <span className="eyebrow">India</span>
+          <h2 id="domestic-packages-heading">Domestic Packages</h2>
+          <p>Curated journeys across India — same calm booking flow from browse to confirm.</p>
         </div>
-        <div className="strip">
-          {destinations.map((d) => (
-            <Link key={d.name} to={d.href} className="dest-tile">
-              <img src={d.image} alt="" loading="lazy" />
-              <div className="dest-tile-body">
-                <h3>{d.name}</h3>
-                <p>{d.blurb}</p>
+        <div className="listing-grid">
+          {domesticPackages.map((pkg) => (
+            <Link key={pkg.id} to={`/explore/${pkg.id}`} className="listing-card">
+              <img src={pkg.image} alt="" loading="lazy" />
+              <div className="listing-body">
+                <span className="listing-tag">Domestic</span>
+                <h3>{pkg.title}</h3>
+                <p className="ink-soft text-092">
+                  {pkg.place} · {pkg.duration}
+                </p>
+                <div className="listing-footer">
+                  <div className="listing-price-block">
+                    <strong className="listing-price-label">{formatINR(pkg.price)}</strong>
+                    <PiGcvPrice inr={pkg.price} />
+                  </div>
+                  <span className="btn-text">View →</span>
+                </div>
               </div>
             </Link>
           ))}
@@ -240,29 +250,19 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section shell" id="home-packages" aria-labelledby="domestic-packages-heading">
+      <section className="section shell">
         <div className="section-head">
-          <span className="eyebrow">India</span>
-          <h2 id="domestic-packages-heading">Domestic Packages</h2>
-          <p>Curated journeys across India — same calm booking flow from browse to confirm.</p>
+          <span className="eyebrow">Where to next</span>
+          <h2>Destinations with room to breathe</h2>
+          <p>Soft coasts, green shade, and high ridges — pick a mood and we’ll take it from search to booking.</p>
         </div>
-        <div className="listing-grid">
-          {domesticPackages.map((pkg) => (
-            <Link key={pkg.id} to={`/explore/${pkg.id}`} className="listing-card">
-              <img src={pkg.image} alt="" loading="lazy" />
-              <div className="listing-body">
-                <span className="listing-tag">Domestic</span>
-                <h3>{pkg.title}</h3>
-                <p className="ink-soft text-092">
-                  {pkg.place} · {pkg.duration}
-                </p>
-                <div className="listing-footer">
-                  <div className="listing-price-block">
-                    <strong className="listing-price-label">{formatINR(pkg.price)}</strong>
-                    <PiGcvPrice inr={pkg.price} />
-                  </div>
-                  <span className="btn-text">View →</span>
-                </div>
+        <div className="strip">
+          {destinations.map((d) => (
+            <Link key={d.name} to={d.href} className="dest-tile">
+              <img src={d.image} alt="" loading="lazy" />
+              <div className="dest-tile-body">
+                <h3>{d.name}</h3>
+                <p>{d.blurb}</p>
               </div>
             </Link>
           ))}
