@@ -1,0 +1,29 @@
+{
+  "name": "SHUBHAM HOLIDAYS",
+  "short_name": "Shubham",
+  "description": "Book flights, hotels, and holiday packages with Pi on Mainnet.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8ee",
+  "theme_color": "#0f5233",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pi-app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
