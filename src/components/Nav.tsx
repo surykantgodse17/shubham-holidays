@@ -56,17 +56,14 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
             />
             <span className="site-brand-text">SHUBHAM HOLIDAYS</span>
           </Link>
-          <div className="nav-brand-actions">
-            <LanguageSwitcher overHero={overHero} />
-            <button
-              className="menu-btn"
-              aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
-              aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
-            >
-              <span />
-            </button>
-          </div>
+          <button
+            className="menu-btn"
+            aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span />
+          </button>
         </div>
 
         <nav className={`nav-links${open ? " open" : ""}`} aria-label="Primary">
@@ -91,11 +88,14 @@ export function Nav({ belowHero = false, overHero = false }: NavProps) {
           <NavLink to="/contact" onClick={() => setOpen(false)}>
             {t("nav.contact")}
           </NavLink>
-          {overHero ? (
-            <Link to="/flights" className="btn btn-primary nav-cta" onClick={() => setOpen(false)}>
-              {t("nav.planTrip")}
-            </Link>
-          ) : null}
+          <Link
+            to="/flights"
+            className={`btn btn-primary nav-cta${overHero ? "" : " nav-cta-solid"}`}
+            onClick={() => setOpen(false)}
+          >
+            {t("nav.planTrip")}
+          </Link>
+          <LanguageSwitcher overHero={overHero} />
         </nav>
       </div>
     </header>
