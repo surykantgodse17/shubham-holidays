@@ -287,13 +287,13 @@ export const destinations = [
     name: "Goa",
     blurb: "Palm coasts and slow evenings",
     image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=80",
-    href: "/hotels?city=GOI",
+    href: "/explore/l8",
   },
   {
     name: "Himalayas",
     blurb: "Ridges, mist, and quiet dawns",
     image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80",
-    href: "/explore",
+    href: "/explore/l9",
   },
   {
     name: "Kerala",
@@ -469,6 +469,34 @@ export const internationalPackages: InternationalPackage[] = [
   },
 ];
 
+export type PackageService = {
+  id: string;
+  name: string;
+  price: number;
+};
+
+/** Split full package price across named services (sum === full price). */
+export function packageServicesFromNames(
+  packageId: string,
+  fullPrice: number,
+  names: string[],
+): PackageService[] {
+  const labels = names.length ? names : ["Package"];
+  const n = labels.length;
+  const each = Math.floor(fullPrice / n);
+  return labels.map((name, i) => ({
+    id: `${packageId}-svc-${i}`,
+    name,
+    price: i === n - 1 ? fullPrice - each * (n - 1) : each,
+  }));
+}
+
+export function getPackageServices(listing: Listing): PackageService[] {
+  const intl = internationalPackages.find((p) => p.id === listing.id);
+  const names = intl?.inclusions?.length ? intl.inclusions : listing.highlights;
+  return packageServicesFromNames(listing.id, listing.price, names);
+}
+
 /** Resolve domestic listings or international packages for the in-app book → checkout flow. */
 export function findBookablePackage(id: string): Listing | null {
   const listing = listings.find((l) => l.id === id);
@@ -483,7 +511,7 @@ export function findBookablePackage(id: string): Listing | null {
     duration: intl.duration,
     price: intl.price,
     image: intl.image,
-    highlights: intl.inclusions.slice(0, 5),
+    highlights: intl.inclusions,
     description: `${intl.title} · ${intl.place} · ${intl.duration}. Includes ${intl.inclusions.join(", ")}.`,
   };
 }

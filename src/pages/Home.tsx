@@ -267,7 +267,7 @@ export function Home() {
         </div>
         <div className="listing-grid">
           {internationalPackages.map((pkg) => (
-            <article key={pkg.id} className="listing-card">
+            <Link key={pkg.id} to={`/explore/${pkg.id}`} className="listing-card">
               <img src={pkg.image} alt="" loading="lazy" />
               <div className="listing-body">
                 <span className="listing-tag listing-tag-intl">International</span>
@@ -288,12 +288,10 @@ export function Home() {
                     </strong>
                     <PiGcvPrice inr={pkg.price} />
                   </div>
-                  <Link to={`/explore/${pkg.id}`} className="btn btn-sea">
-                    Book Now
-                  </Link>
+                  <span className="btn btn-sea">View details</span>
                 </div>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </section>
